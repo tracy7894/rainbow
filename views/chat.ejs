@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    
+
+</head>
+<body>
+  <h1>聊天室</h1>
+  <textarea id="text"></textarea>
+  <input id="btn" type="submit" value="提交"/>
+  <img src="https://pbs.twimg.com/media/GYP639gakAEg73y?format=jpg&name=large" width="30%" >
+</body>
+<script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+
+<script>
+  const socket = io.connect('/');
+
+  document.getElementById("btn").onclick = function () {
+    const val = document.getElementById("text").value;
+    if (!val) return;
+
+    document.getElementById("text").value = "";
+    socket.emit('message', val); // 發送消息給伺服器
+  };
+
+  socket.on('message', (msg) => {
+    console.log("接收到消息:", msg);
+    const p = document.createElement("p");
+    p.innerText = msg;
+    document.body.appendChild(p); // 顯示消息在網頁上
+  });
+</script>
+</html>

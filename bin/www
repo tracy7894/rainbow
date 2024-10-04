@@ -9,7 +9,20 @@ db(()=>{
   var app = require('../app');
   var debug = require('debug')('rainbow:server');
   var http = require('http');
-  
+
+  //聊天室
+  const { v4: uuidv4 } = require("uuid");
+  const moment = require("moment");
+  const  fs = require('fs');
+  var server = http.createServer(app);
+  const io = require('socket.io')(server, {
+    cors: {
+        origin: "*", // 或者指定允許的來源
+        methods: ["GET", "POST"],
+        allowedHeaders: ["my-custom-header"],
+        credentials: true
+    }
+  });
   /**
    * Get port from environment and store in Express.
    */
@@ -21,7 +34,6 @@ db(()=>{
    * Create HTTP server.
    */
   
-  var server = http.createServer(app);
   
   /**
    * Listen on provided port, on all network interfaces.
@@ -34,6 +46,15 @@ db(()=>{
   /**
    * Normalize a port into a number, string, or false.
    */
+  io.on('connection', function(socket) {
+    console.log('A user connected');
+  
+    socket.on('message', (msg) => {
+      console.log('Received message:', msg);
+      io.emit('message', msg);
+    });
+  });
+  
   
   function normalizePort(val) {
     var port = parseInt(val, 10);
@@ -54,6 +75,18 @@ db(()=>{
   /**
    * Event listener for HTTP server "error" event.
    */
+
+  // io.on('connection', function (socket) {
+  //   console.log('A user connected');  // 確認用戶連接
+  //   socket.emit('news', { hello: 'world' });
+    
+  //   socket.on('my other event', function (data) {
+  //     console.log(data);  // 輸出接收到的數據
+  //   });
+  // });
+//console.log(io);
+// 检测连接事件
+
   
   function onError(error) {
     if (error.syscall !== 'listen') {
