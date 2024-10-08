@@ -105,7 +105,7 @@ router.get('/identity', function(req, res) {
   res.render('identity');  
 });
 
-router.get('/setgroup',checkLogin,(req,res)=>{
+router.get('/setgroup',(req,res)=>{
     res.render('setgroup')
 })
 
