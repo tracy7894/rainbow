@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>group</title>
+    <style>
+        body{
+            font-size: 30px;
+        }
+    </style>
+</head>
+<body>
+    <h3>login</h3>
+    <form method="post" action="/setgroup">
+        <div>
+            <label for="item">學生姓名:</label>
+            <br>
+            <input name="username" type="text" id="item">
+        </div>
+        <div>
+            <label for="age">組別:</label>
+            <select name="groupId" id="groupId">
+                <script>
+                    for (let i = 0; i <= 5; i++) {
+                        document.write(`<option value="${i}">${i}</option>`);
+                    }
+                </script>
+            </select>
+        <button type="submit">確定</button>
+    </form>
+</body>
+</html>

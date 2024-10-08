@@ -1,12 +1,11 @@
 const mongoose=require('mongoose')
 let ExternalUser=new mongoose.Schema({
-    username:String,
-    password:String,
-    group:String,
-    name:String,
-    age:Number,
-    gender:String,
-
+    username: { type: String, required: true },
+    password:{ type: String, required: true },
+    group:{ type: String, required: true },
+    name:{ type: String, required: true },
+    age:{ type: String, required: true },
+    gender:{ type: String, required: true },
     access:{
         type:Boolean,
         default:false,

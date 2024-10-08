@@ -15,7 +15,7 @@ const {DBHOST,DBPORT,DBNAME}=require('./config/config')
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
-app.use(session({
+const sessionMiddleware=app.use(session({
   name:'sid',
   secret:'123',
   saveUninitialized:false,
@@ -28,6 +28,7 @@ app.use(session({
       maxAge:60*1000*60
   }
 }))
+
 
 app.use(logger('dev'));
 app.use(express.json());

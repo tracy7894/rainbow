@@ -1,10 +1,10 @@
 const mongoose=require('mongoose')
 let StudentUser=new mongoose.Schema({
-    username:String,
-    password:String,
-    name:String,
-    group:String,
-    class:String,
+    username:{ type: String, required: true },
+    password:{ type: String, required: true },
+    name:{ type: String, required: true },
+    groupId:{ type: String, default: null },
+    class:{ type: String, default: null },
     access:{
         type:Boolean,
         default:false,
