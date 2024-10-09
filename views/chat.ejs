@@ -26,9 +26,7 @@
       query: { groupId: '<%= groupId %>' }
     });
 
-    // 載入聊天室歷史紀錄
-    
-    // 加載歷史聊天記錄
+    // 載入聊天紀錄
     socket.on('chatHistory', (history) => {
       document.getElementById("messages").innerHTML = "";
       history.forEach(data => {
@@ -63,6 +61,7 @@
         document.getElementById("sizeWarning").style.display = "none";
       }
 
+      //壓縮圖片
       const pica = window.pica({ features: ["all"] });
       const img = document.createElement('img');
       const canvas = document.createElement('canvas');
@@ -81,7 +80,6 @@
           socket.emit('image', { username: '<%= username %>', image: base64Image, groupId: '<%= groupId %>' });
         };
       };
-
       reader.readAsDataURL(file); 
     };
 

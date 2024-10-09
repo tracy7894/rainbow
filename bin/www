@@ -12,7 +12,6 @@ db(()=>{
   var debug = require('debug')('rainbow:server');
   var http = require('http');
 
-  //聊天室
   const { v4: uuidv4 } = require("uuid");
   const moment = require("moment");
   const  fs = require('fs');
@@ -21,7 +20,7 @@ db(()=>{
 
   const io = require('socket.io')(server, {   
     cors: {
-        origin: "*", // 或者指定允許的來源
+        origin: "*", // 指定允許的來源
         methods: ["GET", "POST"],
         allowedHeaders: ["my-custom-header"],
         credentials: true
@@ -97,14 +96,13 @@ db(()=>{
     });
 
     // 圖片
-
     socket.on('image', async(data) => {
       console.log(`${data.username} 發送了一張圖片 ${data.groupId}`);
      
       const newImageMessage = new MessageData({
           username: data.username,
           image: data.image, // 圖片的 base64 字符串
-          groupId: data.groupId, // 確保這裡是 groupId
+          groupId: data.groupId, 
       });
   
       newImageMessage.save()
