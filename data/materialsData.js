@@ -1,8 +1,9 @@
 const mongoose=require('mongoose')
-let materialsData=new mongoose.Schema({
-    name:{ type: String, required: true },
+let MaterialsData=new mongoose.Schema({
+    title:{ type: String, required: true },
+    descripition:{ type: String, required: true },
     createdAt: { type: Date, default: Date.now },
     
 })
-let materialsDataModel=mongoose.model('materialsData',materialsData)
-module.exports=materialsDataModel
+let MaterialsDataModel=mongoose.model('MaterialsData',MaterialsData)
+module.exports=MaterialsDataModel

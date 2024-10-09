@@ -6,6 +6,7 @@ var router = express.Router();
 
 const StudentUserModel=require('../data/StudentUser') //學生
 const ExternalUserModel=require('../data/ExternalUser') //校外
+const MaterialsDataModel=require('../data/materialsData') 
 
 let checkLogin=require('../middleware/checkLogin');
 const { group } = require('console');
@@ -124,6 +125,13 @@ router.post('/setgroup',(req,res)=>{
       console.error('更新學生組別時出錯:', err);
       return res.status(500).json({ message: "伺服器錯誤，請稍後再試" });
   });
+})
+router.get('/materials',(req,res)=>{
+  res.render('materials')
+})
+
+router.post('/materials',(req,res)=>{
+  
 })
 
 module.exports = router;
