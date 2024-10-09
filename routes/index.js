@@ -6,7 +6,7 @@ var router = express.Router();
 
 const StudentUserModel=require('../data/StudentUser') //學生
 const ExternalUserModel=require('../data/ExternalUser') //校外
-const MaterialsDataModel=require('../data/materialsData') 
+const MaterialsDataModel=require('../data/materialsData') //教  材
 
 let checkLogin=require('../middleware/checkLogin');
 const { group } = require('console');
@@ -126,11 +126,19 @@ router.post('/setgroup',(req,res)=>{
       return res.status(500).json({ message: "伺服器錯誤，請稍後再試" });
   });
 })
-router.get('/materials',(req,res)=>{
-  res.render('materials')
-})
 
-router.post('/materials',(req,res)=>{
+//教材
+// router.get('/materials',(req,res)=>{
+//   res.render('materials')
+// })
+
+// router.post('/materials',(req,res)=>{
+  
+// })
+router.get('/searchstudent',(req,res)=>{
+  res.render('searchstudent')
+})
+router.post('/searchstudent',(req,res)=>{
   
 })
 
