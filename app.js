@@ -14,7 +14,8 @@ const {DBHOST,DBPORT,DBNAME}=require('./config/config')
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
-
+const React = require('react');
+const { BrowserRouter: Router, Route, Switch } = require('react-router-dom');
 const sessionMiddleware=app.use(session({
   name:'sid',
   secret:'123',

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>學生列表</title>
+</head>
+<body>
+    <h1>學生列表</h1>
+    
+    <label for="classFilter">班級:</label>
+    <input type="text" id="classFilter" placeholder="輸入班級">
+
+    <label for="accessFilter">通過驗證:</label>
+    <select id="accessFilter">
+        <option value="">全部</option>
+        <option value="true">是</option>
+        <option value="false">否</option>
+    </select>
+
+    <button id="filterButton">篩選</button>
+
+    <ul id="studentList"></ul>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        // 在頁面加載時自動獲取並顯示所有學生
+        window.onload = fetchStudents;
+
+        // 點擊篩選按鈕後觸發的事件
+        document.getElementById('filterButton').addEventListener('click', fetchStudents);
+
+        // 獲取並顯示學生列表
+        async function fetchStudents() {
+            const classFilter = document.getElementById('classFilter').value;
+            const accessFilter = document.getElementById('accessFilter').value;
+
+            try {
+                // 發送 GET 請求到 API 獲取學生數據
+                const response = await axios.get('/api/students', {
+                    params: {
+                        class: classFilter || undefined,
+                        access: accessFilter || undefined,
+                    }
+                });
+                displayStudents(response.data);
+            } catch (error) {
+                console.error('Error fetching student data:', error);
+            }
+        }
+
+        // 將學生數據顯示在網頁上
+        function displayStudents(students) {
+            const studentList = document.getElementById('studentList');
+            studentList.innerHTML = ''; // 清空列表
+
+            students.forEach(student => {
+                const li = document.createElement('li');
+                li.textContent = `姓名: ${student.username}, 班級: ${student.class}, 通過驗證: ${student.access ? '是' : '否'}`;
+                studentList.appendChild(li);
+            });
+        }
+    </script>
+</body>
+</html>

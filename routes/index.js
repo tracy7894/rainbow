@@ -10,6 +10,9 @@ const MaterialsDataModel=require('../data/materialsData') //教  材
 
 let checkLogin=require('../middleware/checkLogin');
 const { group } = require('console');
+const path = require('path');
+
+app.set('views', path.join(__dirname, 'views'));
 
 router.get('/', function(req, res, next) {
   res.render('index', { title: 'welcome' });
@@ -31,63 +34,57 @@ router.get('/reg_student',(req,res)=>{
   res.render('reg_student')
 })
 
-router.post('/reg_student',(req,res)=>{
-  StudentUserModel.create({...req.body})
-  .then(data=>{
-    res.render('success',{msg:'註冊成功',url:'/login'})
-  })
-  .catch(err=>{
-    res.status(500).send('失敗')
-  })
-})
+router.post('/api/reg_student', async (req, res) => {
+  try {
+    await StudentUserModel.create({ ...req.body });
+    res.json({ success: true, message: '註冊成功', redirectUrl: '/login' });
+  } catch (error) {
+    console.error('註冊失敗:', error);
+    res.status(500).json({ success: false, message: '註冊失敗' });
+  }
+});
 
 router.get('/reg_external',(req,res)=>{
   res.render('reg_external')
 })
 
-router.post('/reg_external',(req,res)=>{
-  ExternalUserModel.create({...req.body})
-  .then(data=>{
-    res.render('success',{msg:'註冊成功',url:'/login'})
-  })
-  .catch(err=>{
-    res.status(500).send('失敗')
-  })
-})
+router.post('/api/reg_external', async (req, res) => {
+  try {
+    await ExternalUserModel.create({ ...req.body });
+    res.json({ success: true, message: '註冊成功', redirectUrl: '/login' });
+  } catch (error) {
+    console.error('註冊失敗:', error);
+    res.status(500).json({ success: false, message: '註冊失敗' });
+  }
+});
 
-router.post('/login',(req,res)=>{
-  let {username,password}=req.body
-  StudentUserModel.findOne({ username: username, password: password })
-  .then(student => {
+router.post('/api/login', async (req, res) => {
+  const { username, password } = req.body;
+
+  try {
+    // 查找學生
+    const student = await StudentUserModel.findOne({ username, password });
     if (student) {
-
       req.session.username = student.username;
       req.session.groupId = student.groupId;
-      return res.render('success', { msg: "welcome " + student.username, url: '/index' });
-    } else {
-      // 如果沒有找到學生，查詢外部使用者
-      return ExternalUserModel.findOne({ username: username, password: password });
+      return res.json({ success: true, message: "welcome " + student.username, redirectUrl: '/index' });
     }
-  })
-  .then(externalUser => {
-    // 如果外部使用者存在
+
+    // 查找校外人士
+    const externalUser = await ExternalUserModel.findOne({ username, password });
     if (externalUser) {
       req.session.username = externalUser.username;
-      return res.render('success', { msg: "welcome " + externalUser.username, url: '/index' });
-    } else {
-      // 如果沒有找到任何使用者，返回登錄失敗
-      if (!res.headersSent) {
-        return res.status(400).send('登錄失敗');
-      }
+      return res.json({ success: true, message: "welcome " + externalUser.username, redirectUrl: '/index' });
     }
-  })
-  .catch(err => {
-    if (!res.headersSent) {
-      return res.status(500).send('error');
-    }
+
+    // 沒有找到任何用戶，返回失敗消息
+    return res.status(400).json({ success: false, message: '登錄失敗' });
+  } catch (err) {
     console.error('Login error:', err);
-  });
+    return res.status(500).json({ success: false, message: '伺服器錯誤，請稍後再試' });
+  }
 });
+
 router.get('/logout',(req,res)=>{
   req.session.destroy(()=>{
     res.render('success',{msg:'登出成功',url:'/login'})
@@ -95,6 +92,7 @@ router.get('/logout',(req,res)=>{
 })
 
 router.get('/chat',checkLogin,(req, res) => {
+  
   if(!req.session.groupId){
      return res.send("尚未分組")
   }
@@ -127,19 +125,40 @@ router.post('/setgroup',(req,res)=>{
   });
 })
 
-//教材
-// router.get('/materials',(req,res)=>{
-//   res.render('materials')
-// })
+router.get('/studentList', async (req, res) => {
+  try {
+    res.sendFile(path.join(__dirname, '../views/studentList.html'));
+  } catch (error) {
+    console.error('取得學生列表時發生錯誤:', error);
+    res.status(500).json({ message: '伺服器錯誤，請稍後再試' });
+  }
+  
+});
+router.get('/api/students', async (req, res) => {
+  try {
+    const { class: classFilter, access } = req.query; // 獲取篩選條件
+    const filter = {};
 
-// router.post('/materials',(req,res)=>{
-  
-// })
-router.get('/searchstudent',(req,res)=>{
-  res.render('searchstudent')
-})
-router.post('/searchstudent',(req,res)=>{
-  
-})
+    if (classFilter) {
+      filter.class = classFilter;
+    }
+    if (access) {
+      filter.access = access === 'true';
+    }
+
+    const students = await StudentUserModel.find(filter, 'username class access'); 
+    // 查詢時指定返回字段
+    console.log(students);
+    res.json(students); // 返回學生列表 JSON 格式
+  } catch (error) {
+    console.error('取得學生列表時發生錯誤:', error);
+    res.status(500).json({ message: '伺服器錯誤，請稍後再試' });
+  }
+});
+
+
+
+module.exports = router;
+
 
 module.exports = router;
