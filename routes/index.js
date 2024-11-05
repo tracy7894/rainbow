@@ -134,6 +134,17 @@ router.get('/studentList', async (req, res) => {
   }
   
 });
+// 獲取所有班級
+router.get('/api/classes', async (req, res) => {
+  try {
+    const classes = await StudentUserModel.distinct('class');
+    res.json(classes); 
+  } catch (error) {
+    console.error('取得班級列表時發生錯誤:', error);
+    res.status(500).json({ message: '伺服器錯誤，請稍後再試' });
+  }
+});
+
 router.get('/api/students', async (req, res) => {
   try {
     const { class: classFilter, access } = req.query; // 獲取篩選條件

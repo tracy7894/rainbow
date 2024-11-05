@@ -9,7 +9,9 @@
     <h1>學生列表</h1>
     
     <label for="classFilter">班級:</label>
-    <input type="text" id="classFilter" placeholder="輸入班級">
+    <select id="classFilter">
+        <option value="">全部</option> <!-- 預設顯示所有學生 -->
+    </select>
 
     <label for="accessFilter">通過驗證:</label>
     <select id="accessFilter">
@@ -24,11 +26,33 @@
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
-        // 在頁面加載時自動獲取並顯示所有學生
-        window.onload = fetchStudents;
+        // 在頁面加載時自動獲取所有班級和學生
+        window.onload = async function() {
+            await fetchClasses();
+            fetchStudents();
+        };
 
         // 點擊篩選按鈕後觸發的事件
         document.getElementById('filterButton').addEventListener('click', fetchStudents);
+
+        // 獲取並顯示班級選項
+        async function fetchClasses() {
+            try {
+                const response = await axios.get('/api/classes');
+                const classes = response.data;
+                const classFilter = document.getElementById('classFilter');
+
+                // 將每個班級添加到選擇框
+                classes.forEach(classItem => {
+                    const option = document.createElement('option');
+                    option.value = classItem;
+                    option.textContent = classItem;
+                    classFilter.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error fetching classes:', error);
+            }
+        }
 
         // 獲取並顯示學生列表
         async function fetchStudents() {
