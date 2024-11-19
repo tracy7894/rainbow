@@ -5,6 +5,10 @@ let StudentUser=new mongoose.Schema({
     name:{ type: String, required: true },
     groupId:{ type: String, default: null },
     class:{ type: String, default: null },
+    academicYear: { type: String, required: true }, // 學年
+    gradeLevel: { type: String, required: true },  // 年級
+    groupRole: { type: String, default: '成員' }, // 預設為普通成員
+
     access:{
         type:Boolean,
         default:false,

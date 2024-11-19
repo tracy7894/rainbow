@@ -40,6 +40,23 @@
             <label for="password">密碼:</label><br>
             <input name="password" type="password" id="password" required>
         </div>
+        <div>
+            <label for="academicYear">學年:</label><br>
+            <select id="academicYear" name="academicYear" required>
+                <option value="四技">四技</option>
+                <option value="二技">二技</option>
+                <option value="研究組">研究組</option>
+            </select>
+        </div>
+        <div>
+            <label for="gradeLevel">年級:</label><br>
+            <select id="gradeLevel" name="gradeLevel" required>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+            </select>
+        </div>
         <button type="submit">註冊</button>
     </form>
     <div id="message"></div>
@@ -53,6 +70,8 @@
             const className = document.getElementById('class').value;
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
+            const academicYear = document.getElementById('academicYear').value;
+            const gradeLevel = document.getElementById('gradeLevel').value;
             const messageDiv = document.getElementById('message');
             const errorDiv = document.getElementById('error');
 
@@ -61,7 +80,9 @@
                     name,
                     class: className,
                     username,
-                    password
+                    password,
+                    academicYear,
+                    gradeLevel
                 });
                 
                 // 清空錯誤訊息
@@ -72,7 +93,7 @@
                     messageDiv.textContent = response.data.message;
                     setTimeout(() => {
                         window.location.href = response.data.redirectUrl;
-                    },500); 
+                    }, 500); 
                 } else {
                     messageDiv.textContent = '';
                     errorDiv.textContent = '註冊失敗';

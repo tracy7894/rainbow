@@ -31,6 +31,12 @@
 <body>
     <h1>用戶認證</h1>
     
+    <label for="userType">用戶類型:</label>
+    <select id="userType">
+        <option value="student">學生</option>
+        <option value="external">校外人士</option>
+    </select>
+
     <label for="name">姓名:</label>
     <input type="text" id="name" placeholder="輸入姓名">
     
@@ -40,7 +46,6 @@
     <label for="class">班級:</label>
     <select id="class">
         <option value="">全部</option>
-        <!-- 班級選項會在這裡顯示 -->
     </select>
     
     <label for="gradeLevel">年級:</label>
@@ -62,8 +67,7 @@
     
     <label for="groupId">組別:</label>
     <select id="groupId">
-        <option value="">全部</option>
-        <!-- 組別選項會在這裡顯示 -->
+    <option value="">全部</option>
     </select>
     
     <button id="searchButton">查詢</button>
@@ -72,8 +76,12 @@
         <thead>
             <tr>
                 <th>姓名</th>
+                <th>學號</th>
                 <th>班級</th>
+                <th>年級</th>
+                <th>學年</th>
                 <th>組別</th>
+                <th>操作</th>
             </tr>
         </thead>
         <tbody>
@@ -86,46 +94,20 @@
     <script>
         document.getElementById('searchButton').addEventListener('click', fetchUsers);
 
-        // 請求班級和組別列表並填充下拉選單
-        async function loadClassesAndGroups() {
-            try {
-                const response = await axios.get('/api/accessed_users', { params: {} });
-                const classSelect = document.getElementById('class');
-                const groupSelect = document.getElementById('groupId');
-                
-                // 動態填充班級下拉選單
-                response.data.uniqueClasses.forEach(className => {
-                    const option = document.createElement('option');
-                    option.value = className;
-                    option.textContent = className;
-                    classSelect.appendChild(option);
-                });
-
-                // 動態填充組別下拉選單
-                response.data.uniqueGroups.forEach(groupId => {
-                    const option = document.createElement('option');
-                    option.value = groupId;
-                    option.textContent = groupId;
-                    groupSelect.appendChild(option);
-                });
-            } catch (error) {
-                console.error('加載班級和組別列表時發生錯誤:', error);
-            }
-        }
-
         async function fetchUsers() {
+            const userType = document.getElementById('userType').value;
             const name = document.getElementById('name').value;
             const username = document.getElementById('username').value;
             const classFilter = document.getElementById('class').value;
             const gradeLevel = document.getElementById('gradeLevel').value;
             const academicYear = document.getElementById('academicYear').value;
             const groupId = document.getElementById('groupId').value;
-
+            
             try {
-                const response = await axios.get('/api/accessed_users', {
-                    params: { name, username, class: classFilter, gradeLevel, academicYear, groupId }
+                const response = await axios.get('/api/users', {
+                    params: { type: userType, name, username, class: classFilter, gradeLevel, academicYear, groupId }
                 });
-                displayUsers(response.data.allUsers);
+                displayUsers(response.data);
             } catch (error) {
                 console.error('查詢用戶時發生錯誤:', error);
                 document.getElementById('error').textContent = '伺服器錯誤，請稍後再試';
@@ -140,15 +122,31 @@
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${user.name}</td>
+                    <td>${user.username || 'N/A'}</td>
                     <td>${user.class || 'N/A'}</td>
+                    <td>${user.gradeLevel || 'N/A'}</td>
+                    <td>${user.academicYear || 'N/A'}</td>
                     <td>${user.groupId || 'N/A'}</td>
+                    <td><button onclick="verifyUser('${user._id}', document.getElementById('userType').value)">認證</button></td>
+
                 `;
                 userTableBody.appendChild(tr);
             });
         }
 
-        // 初始化時加載班級和組別列表
-        loadClassesAndGroups();
+        async function verifyUser(userId, userType) {
+            try {
+                console.log(`Verifying User - ID: ${userId}, Type: ${userType}`);
+                const response = await axios.put(`/api/users/${userId}?type=${userType}`);
+                document.getElementById('message').textContent = response.data.message;
+                fetchUsers(); // 更新列表
+            } catch (error) {
+                console.error('認證用戶時發生錯誤:', error);
+                document.getElementById('error').textContent = '認證失敗';
+            }
+        }
+
+
     </script>
 </body>
 </html>

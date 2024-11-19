@@ -6,11 +6,12 @@ var router = express.Router();
 
 const StudentUserModel=require('../data/StudentUser') //學生
 const ExternalUserModel=require('../data/ExternalUser') //校外
-const MaterialsDataModel=require('../data/materialsData') //教  材
-
+const MaterialsDataModel=require('../data/MaterialsData') //教  材
+const DocumentDataModel=require('../data/documentData')//寶典
 let checkLogin=require('../middleware/checkLogin');
 const { group } = require('console');
 const path = require('path');
+
 
 app.set('views', path.join(__dirname, 'views'));
 
@@ -19,6 +20,7 @@ router.get('/', function(req, res, next) {
 });
 router.get('/index',checkLogin, (req, res,next)=> {
     console.log(req.session.username)
+  //  console.log("id="+req.session.groupId)
     res.render('index',{ title: req.session.groupId });
 });
 
@@ -67,6 +69,7 @@ router.post('/api/login', async (req, res) => {
     if (student) {
       req.session.username = student.username;
       req.session.groupId = student.groupId;
+
       return res.json({ success: true, message: "welcome " + student.username, redirectUrl: '/index' });
     }
 
@@ -74,6 +77,8 @@ router.post('/api/login', async (req, res) => {
     const externalUser = await ExternalUserModel.findOne({ username, password });
     if (externalUser) {
       req.session.username = externalUser.username;
+      req.session.groupId = externalUser.groupId;
+
       return res.json({ success: true, message: "welcome " + externalUser.username, redirectUrl: '/index' });
     }
 
@@ -92,11 +97,18 @@ router.get('/logout',(req,res)=>{
 })
 
 router.get('/chat',checkLogin,(req, res) => {
-  
+
+  console.log("id="+req.session.groupId)
   if(!req.session.groupId){
      return res.send("尚未分組")
   }
   res.render('chat', { username: req.session.username ,groupId:req.session.groupId});
+  
+});
+router.get('/publicRoom',checkLogin,(req, res) => {
+
+  console.log("id="+req.session.groupId)
+  res.render('publicRoom', { username: req.session.username ,groupId:"publicRoom"});
   
 });
 
@@ -105,25 +117,114 @@ router.get('/identity', function(req, res) {
 });
 
 router.get('/setgroup',(req,res)=>{
-    res.render('setgroup')
+  res.sendFile(path.join(__dirname, '../views/setgroup.html'));
 })
+/////////????????
+router.put('/api/update-group', async (req, res) => {
+  const { courseType, userIds, groupId } = req.body;
+  const model = courseType === 'internal' ? StudentUserModel : ExternalUserModel;
 
-router.post('/setgroup',(req,res)=>{
-  const { username, groupId } = req.body;
-  StudentUserModel.findOneAndUpdate({ username: username }, { groupId: groupId }, { new: true })
-  .then(student => {
-      if (!student) {
-          return res.status(404).json({ message: "未找到該學生" });
-      }
+  try {
+      // 更新使用者的 groupId
+      await model.updateMany(
+          { _id: { $in: userIds } },
+          { $set: { groupId } } // 設置正確的組別 ID
+      );
+      res.json({ message: '分組成功' });
+  } catch (error) {
+      console.error('分組失敗:', error);
+      res.status(500).json({ message: '分組失敗' });
+  }
+});
 
-      // 更新成功後的反饋
-      return res.render('success', { msg: `${student.username} 已分配至 Group ${groupId}`, url: '/setgroup' });
-  })
-  .catch(err => {
-      console.error('更新學生組別時出錯:', err);
-      return res.status(500).json({ message: "伺服器錯誤，請稍後再試" });
-  });
-})
+// 獲取所有組別
+router.get('/api/groups', async (req, res) => {
+  const { courseType } = req.query;
+  const model = courseType === 'internal' ? StudentUserModel : ExternalUserModel;
+
+  try {
+      const groups = await model.aggregate([
+          { $match: { access: true } },  // 確保只查找允許訪問的使用者
+          { $group: { _id: "$groupId", members: { $push: "$name" } } },
+          { $sort: { _id: 1 } }
+      ]);
+
+      res.json({ groups });
+  } catch (error) {
+      res.status(500).json({ message: '獲取組別失敗' });
+  }
+});
+
+// 新增組別
+router.post('/api/create-group', async (req, res) => {
+  const { courseType } = req.body;
+  const model = courseType === 'internal' ? StudentUserModel : ExternalUserModel;
+
+  try {
+    // 獲取當前組別的最大編號
+    const lastGroup = await model.aggregate([
+      { $group: { _id: null, maxGroupId: { $max: "$groupId" } } }
+    ]);
+    const newGroupId = lastGroup.length > 0 ? lastGroup[0].maxGroupId + 1 : 1;  // 預設從1開始
+
+    // 創建新的組別
+    const newGroup = {
+      groupId: newGroupId,
+      members: []  // 新組別沒有成員
+    };
+
+    // 假設將組別創建到資料庫
+    await model.create(newGroup);
+
+    // 返回新的組別編號
+    res.json({ newGroupId });
+  } catch (error) {
+    console.error('創建組別失敗:', error);
+    res.status(500).json({ message: '創建組別失敗' });
+  }
+});
+
+// 刪除組別
+router.delete('/api/groups/:groupId', async (req, res) => {
+  const { groupId } = req.params;
+
+  try {
+    // 刪除組別對應的所有使用者的 groupId
+    const result = await Promise.all([
+      StudentUserModel.updateMany({ groupId }, { $unset: { groupId: "" } }),
+      ExternalUserModel.updateMany({ groupId }, { $unset: { groupId: "" } })
+    ]);
+
+    console.log(`刪除組別 ${groupId}，影響了 ${result[0].modifiedCount} 名學生和 ${result[1].modifiedCount} 名外部使用者。`);
+
+    res.json({ message: '組別刪除成功' });
+  } catch (error) {
+    console.error('刪除組別失敗:', error);
+    res.status(500).json({ message: '刪除組別失敗' });
+  }
+});
+
+
+
+// 僅已認證用戶可查詢學生
+router.get('/api/students', async (req, res) => {
+  const { courseType, name } = req.query;
+  const model = courseType === 'internal' ? StudentUserModel : ExternalUserModel;
+
+  try {
+      const students = await model.find({
+          access: true, // 只查詢 access 為 true 的使用者
+          name: { $regex: name || '', $options: 'i' } // 根據姓名模糊搜尋
+      });
+      res.json({ students });
+  } catch (error) {
+      res.status(500).json({ message: '查詢學生失敗' });
+  }
+});
+
+
+
+
 
 router.get('/studentList', async (req, res) => {
   try {
@@ -134,42 +235,164 @@ router.get('/studentList', async (req, res) => {
   }
   
 });
-// 獲取所有班級
-router.get('/api/classes', async (req, res) => {
-  try {
-    const classes = await StudentUserModel.distinct('class');
-    res.json(classes); 
-  } catch (error) {
-    console.error('取得班級列表時發生錯誤:', error);
-    res.status(500).json({ message: '伺服器錯誤，請稍後再試' });
-  }
-});
 
-router.get('/api/students', async (req, res) => {
+
+router.get('/api/accessed_users', async (req, res) => {
   try {
-    const { class: classFilter, access } = req.query; // 獲取篩選條件
-    const filter = {};
+    const { class: classFilter, name, username, gradeLevel, academicYear, groupId } = req.query;
+    const filter = { access: true };  // 只查詢已認證的用戶
 
     if (classFilter) {
-      filter.class = classFilter;
-    }
-    if (access) {
-      filter.access = access === 'true';
+      filter.class = classFilter; // 根據班級篩選
     }
 
-    const students = await StudentUserModel.find(filter, 'username class access'); 
-    // 查詢時指定返回字段
-    console.log(students);
-    res.json(students); // 返回學生列表 JSON 格式
+    if (name) {
+      filter.name = { $regex: name, $options: 'i' }; // 根據姓名篩選
+    }
+
+    if (username) {
+      filter.username = { $regex: username, $options: 'i' }; // 根據學號篩選
+    }
+
+    if (gradeLevel) {
+      filter.gradeLevel = gradeLevel; // 根據年級篩選
+    }
+
+    if (academicYear) {
+      filter.academicYear = academicYear; // 根據學年篩選
+    }
+
+    if (groupId) {
+      filter.groupId = groupId; // 根據組別篩選
+    }
+
+    // 查詢所有班級名稱
+    const allClasses = await StudentUserModel.distinct('class');
+    const externalClasses = await ExternalUserModel.distinct('class');
+    const uniqueClasses = [...new Set([...allClasses, ...externalClasses])];  // 合併並去重
+
+    // 查詢所有組別
+    const allGroups = await StudentUserModel.distinct('groupId');
+    const externalGroups = await ExternalUserModel.distinct('groupId');
+    const uniqueGroups = [...new Set([...allGroups, ...externalGroups])];  // 合併並去重
+
+    // 查詢已認證的學生用戶和外部用戶
+    const studentUsers = await StudentUserModel.find(filter, 'name class groupId');
+    const externalUsers = await ExternalUserModel.find(filter, 'name class groupId');
+
+    // 合併兩個用戶的結果
+    const allUsers = [...studentUsers, ...externalUsers];
+
+    res.json({ allUsers, uniqueClasses, uniqueGroups }); // 返回用戶資料和班級、組別列表
   } catch (error) {
-    console.error('取得學生列表時發生錯誤:', error);
+    console.error('取得用戶資料時發生錯誤:', error);
     res.status(500).json({ message: '伺服器錯誤，請稍後再試' });
   }
 });
 
 
 
-module.exports = router;
+router.get('/consent', async (req, res) => {
+    try {
+        res.sendFile(path.join(__dirname, '../views/consent.html'));
+    } catch (error) {
+        console.error('取得認證頁面時發生錯誤:', error);
+        res.status(500).json({ message: '伺服器錯誤，請稍後再試' });
+    }
+});
 
+router.get('/api/users', async (req, res) => {
+  try {
+      const { type, name, username, class: classFilter, gradeLevel, academicYear, groupId } = req.query;
+      
+      // 查詢學生或校外人士
+      const filters = { access: false }; // 只查詢未認證的
+
+      if (name) filters.name = new RegExp(name, 'i'); // 支援模糊查詢
+      if (username) filters.username = new RegExp(username, 'i');
+
+      let UserModel;
+      if (!type || !['student', 'external'].includes(type)) {
+        return res.status(400).json({ message: '請提供有效的用戶類型 (student 或 external)' });
+      }
+      else if (type === 'student') {
+          UserModel = StudentUserModel;
+          if (classFilter) filters.class = classFilter;
+          if (gradeLevel) filters.gradeLevel = gradeLevel;
+          if (academicYear) filters.academicYear = academicYear;
+          if (groupId) filters.groupId = groupId;
+      } else if (type === 'external') {
+          UserModel = ExternalUserModel;
+      } else {
+          return res.status(400).json({ message: '請提供有效的用戶類型 (student 或 external)' });
+      }
+
+      const users = await UserModel.find(filters);
+      res.json(users);
+  } catch (error) {
+      console.error('查詢用戶資料時發生錯誤:', error);
+      res.status(500).json({ message: '伺服器錯誤，請稍後再試' });
+  }
+});
+
+router.put('/api/users/:id', async (req, res) => {
+  try {
+      const { id } = req.params;
+      const { type } = req.query;
+
+      if (!type || !['student', 'external'].includes(type)) {
+          return res.status(400).json({ message: '請提供有效的用戶類型 (student 或 external)' });
+      }
+
+      let UserModel;
+      if (type === 'student') {
+          UserModel = StudentUserModel;
+      } else if (type === 'external') {
+          UserModel = ExternalUserModel;
+      }
+      // 更新用戶的 access 欄位
+      const user = await UserModel.findByIdAndUpdate(id, { access: true }, { new: true });
+
+      if (!user) {
+          return res.status(404).json({ message: '用戶不存在' });
+      }
+
+      res.json({ message: '用戶已成功認證', user });
+  } catch (error) {
+      console.error('認證用戶時發生錯誤:', error);
+      res.status(500).json({ message: '伺服器錯誤，請稍後再試' });
+  }
+});
+//寶典
+router.get('/documents', async (req, res) => {
+  res.sendFile(path.join(__dirname, '../views/documents.html'));
+});
+router.get('/api/documents', async (req, res) => {
+  const documents = await DocumentDataModel.find();
+  res.json(documents);
+});
+// 更新文本
+router.put('/api/documents/:id', async (req, res) => {
+  const { id } = req.params;
+  const { content } = req.body;
+
+  const document = await DocumentDataModel.findByIdAndUpdate(id, { content }, { new: true });
+  res.json(document);
+});
+
+// 新增文本
+router.post('/api/documents', async (req, res) => {
+  const { title, content } = req.body;
+  const document = new DocumentDataModel({ title, content});
+  await document.save();
+  res.json(document);
+});
+
+// 刪除文本
+router.delete('/api/documents/:id', async (req, res) => {
+  const { id } = req.params;
+  await DocumentDataModel.findByIdAndDelete(id);
+  res.json({ message: '文本已刪除' });
+});
 
 module.exports = router;

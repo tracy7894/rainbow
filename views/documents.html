@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>文檔管理</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    .document {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    .document h2 {
+      margin: 0;
+    }
+    .document p {
+      margin: 10px 0;
+    }
+    .button {
+      padding: 10px 15px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .button:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+<body>
+  <h1>文檔管理</h1>
+
+  <!-- 新增文檔 -->
+  <h2>創建新文檔</h2>
+  <form id="createForm">
+    <input type="text" id="title" placeholder="文檔標題" required><br><br>
+    <textarea id="content" placeholder="文檔內容（選填）"></textarea><br><br>
+    <button type="submit" class="button">創建文檔</button>
+  </form>
+
+  <hr>
+
+  <h2>現有文檔</h2>
+  <div id="documentList"></div>
+
+  <script>
+    // 獲取所有文檔
+    async function fetchDocuments() {
+      const response = await fetch('/api/documents');
+      const documents = await response.json();
+      const documentList = document.getElementById('documentList');
+      documentList.innerHTML = ''; // 清空當前內容
+      documents.forEach(doc => {
+        const docElement = document.createElement('div');
+        docElement.className = 'document';
+        docElement.innerHTML = `
+          <h2>${doc.title}</h2>
+          <p>${doc.content }</p>
+          <button class="button" onclick="editDocument('${doc._id}')">編輯</button>
+          <button class="button" onclick="deleteDocument('${doc._id}')">刪除</button>
+        `;
+        documentList.appendChild(docElement);
+      });
+    }
+
+    // 創建新文檔
+    document.getElementById('createForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const title = document.getElementById('title').value;
+      const content = document.getElementById('content').value || ''; // 如果 content 為空，默認為空字符串
+      
+      const response = await fetch('/api/documents', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ title, content })
+      });
+      
+      const newDocument = await response.json();
+      alert('文檔創建成功！');
+      fetchDocuments(); // 重新加載文檔列表
+    });
+
+    // 編輯文檔
+    async function editDocument(id) {
+      const newContent = prompt('輸入新的內容：');
+      if (newContent !== null) {
+        const response = await fetch(`/api/documents/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ content: newContent })
+        });
+        const updatedDocument = await response.json();
+        alert('文檔已更新！');
+        fetchDocuments(); // 重新加載文檔列表
+      }
+    }
+
+    // 刪除文檔
+    async function deleteDocument(id) {
+      const response = await fetch(`/api/documents/${id}`, {
+        method: 'DELETE',
+      });
+      const result = await response.json();
+      alert(result.message);
+      fetchDocuments(); // 重新加載文檔列表
+    }
+
+    // 頁面加載時獲取所有文檔
+    window.onload = fetchDocuments;
+  </script>
+</body>
+</html>
