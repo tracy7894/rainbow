@@ -9,6 +9,7 @@
 <body>
   <h1>聊天室</h1>
   <h2>歡迎, <%= username %></h2>
+  <h2><%= identity %></h2>
   <textarea id="text" placeholder="輸入你的消息"></textarea>
   <input id="btn" type="submit" value="提交"/>
 
@@ -21,11 +22,18 @@
   <div id="messages"></div>
 
   <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+  <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
   <script>
+    // 假設我們已經從 URL 獲取了 username 和 identity（學生或校外人士）
+    const username = '<%= username %>';
+    const groupId = '<%= groupId %>';
+    const identity = '<%= identity %>'; // 傳遞身份
+  console.log("身分="+identity)
+    // 建立連接，並傳遞 identity 和 groupId
     const socket = io.connect('http://localhost:3000', {
-      query: { groupId: '<%= groupId %>' }
+      query: { groupId: groupId, identity: identity, username: username }
     });
-
+  
     // 載入聊天紀錄
     socket.on('chatHistory', (history) => {
       document.getElementById("messages").innerHTML = "";
@@ -37,69 +45,69 @@
         }
       });
     });
-
+  
     // 發送文字消息
     document.getElementById("btn").onclick = function () {
       const val = document.getElementById("text").value;
       if (!val) return;
-
+  
       document.getElementById("text").value = "";
-      socket.emit('message', { username: '<%= username %>', message: val, groupId: '<%= groupId %>' });
+      socket.emit('message', { username: username, message: val, groupId: groupId, identity: identity });
     };
-
+  
     // 壓縮並發送圖片
     document.getElementById('compressImage').onclick = async function () {
       const file = document.getElementById('imageInput').files[0];
       if (!file) return;
-
+  
       const maxSize = 5 * 1048576; // 5MB
-
+  
       if (file.size > maxSize) {
         document.getElementById("sizeWarning").style.display = "block";
         return;
       } else {
         document.getElementById("sizeWarning").style.display = "none";
       }
-
-      //壓縮圖片
+  
+      // 壓縮圖片
       const pica = window.pica({ features: ["all"] });
       const img = document.createElement('img');
       const canvas = document.createElement('canvas');
-
+  
       const reader = new FileReader();
       
       reader.onload = function (event) {
         img.src = event.target.result;
-
+  
         img.onload = async function () {
           canvas.width = img.width / 2;  // 縮小一半
           canvas.height = img.height / 2; // 縮小一半
-
+  
           await pica.resize(img, canvas, { quality: 3 });
           const base64Image = canvas.toDataURL('image/jpeg', 0.8);
-          socket.emit('image', { username: '<%= username %>', image: base64Image, groupId: '<%= groupId %>' });
+          socket.emit('image', { username: username, image: base64Image, groupId: groupId, identity: identity });
         };
       };
       reader.readAsDataURL(file); 
     };
-
+  
     // 顯示文字消息
     socket.on('message', (msg) => {
       displayMessage(msg);
     });
-
+  
     // 顯示圖片消息
     socket.on('image', (data) => {
       displayImage(data.username, data.image);
     });
-
+  
     // 顯示文字消息的函數
     function displayMessage(msg) {
       const p = document.createElement("p");
       p.innerText = `${msg.username}: ${msg.message}`;
       document.getElementById("messages").appendChild(p);
     }
-
+  
     // 顯示圖片消息的函數
     function displayImage(username, image) {
       const p = document.createElement("p");
@@ -112,5 +120,6 @@
       document.getElementById("messages").appendChild(img);
     }
   </script>
+  
 </body>
 </html>

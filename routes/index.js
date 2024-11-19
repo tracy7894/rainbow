@@ -69,7 +69,7 @@ router.post('/api/login', async (req, res) => {
     if (student) {
       req.session.username = student.username;
       req.session.groupId = student.groupId;
-
+      req.session.identity = student.identity || 'student';
       return res.json({ success: true, message: "welcome " + student.username, redirectUrl: '/index' });
     }
 
@@ -78,7 +78,7 @@ router.post('/api/login', async (req, res) => {
     if (externalUser) {
       req.session.username = externalUser.username;
       req.session.groupId = externalUser.groupId;
-
+      req.session.identity = externalUser.identity || 'external'; 
       return res.json({ success: true, message: "welcome " + externalUser.username, redirectUrl: '/index' });
     }
 
@@ -99,10 +99,12 @@ router.get('/logout',(req,res)=>{
 router.get('/chat',checkLogin,(req, res) => {
 
   console.log("id="+req.session.groupId)
+  console.log("identity="+req.session.identity)
   if(!req.session.groupId){
      return res.send("尚未分組")
   }
-  res.render('chat', { username: req.session.username ,groupId:req.session.groupId});
+  
+  res.render('chat', { username: req.session.username ,groupId:req.session.groupId,identity:req.session.identity});
   
 });
 router.get('/publicRoom',checkLogin,(req, res) => {
