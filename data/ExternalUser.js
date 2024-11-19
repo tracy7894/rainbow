@@ -7,6 +7,7 @@ let ExternalUser=new mongoose.Schema({
     age:{ type: String, required: true },
     gender:{ type: String, required: true },
     groupRole: { type: String, default: '成員' }, // 預設為普通成員
+    identity: { type: String, required: true, default: 'external' },
     access:{
         type:Boolean,
         default:false,

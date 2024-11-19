@@ -6,6 +6,7 @@ MessageDataSchema = new Schema({
   image: { type: String, default: null }, // Base64 image string if sent
   createdAt: { type: Date, default: Date.now },
   groupId: { type: String, required: true },
+  identity: { type: String, required: true },
 });
 
 module.exports = mongoose.model('MessageData', MessageDataSchema);

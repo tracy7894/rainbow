@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -55,8 +55,6 @@
         <button id="externalBtn">校外人士</button>
     </div>
 
-    <button id="createGroupBtn">創建新組別</button>
-
     <div id="groupList" class="group-list"></div>
 
     <div id="addMemberModal" class="modal">
@@ -74,73 +72,53 @@ document.addEventListener('DOMContentLoaded', () => {
     const groupListContainer = document.getElementById('groupList');
     const internalBtn = document.getElementById('internalBtn');
     const externalBtn = document.getElementById('externalBtn');
-    const createGroupBtn = document.getElementById('createGroupBtn');
+    const modal = document.getElementById('addMemberModal');
     let courseType = 'internal'; // 預設顯示校內學生組別
 
-    // 更新分組列表
-    async function fetchGroups() {
+    // 初始化顯示 10 個組別
+    function initializeGroups() {
+        groupListContainer.innerHTML = ''; // 清空現有組別資料
+
+        // 生成 10 個組別
+        for (let i = 1; i <= 10; i++) {
+            const groupItem = document.createElement('div');
+            groupItem.className = 'group-item';
+            groupItem.innerHTML = `
+                <h4>組別 ${i}</h4>
+                <ul id="group-${i}-members">
+                    <li>載入中...</li>
+                </ul>
+                <button class="add-member-btn" data-group-id="${i}">新增組員</button>
+            `;
+            groupListContainer.appendChild(groupItem);
+            fetchGroupMembers(`${i}`) // 初始化組別成員
+        }
+
+    }
+
+    // 從後端抓取指定組別的成員
+    async function fetchGroupMembers(groupId) {
+        const groupMembersList = document.getElementById(`group-${groupId}-members`);
         try {
             const response = await axios.get(`/api/groups?courseType=${courseType}`);
             const groups = response.data.groups;
 
-            // 清空當前分組列表
-            groupListContainer.innerHTML = '';
+            // 找到對應的組別
+            const group = groups.find(g => g._id === groupId);
+            groupMembersList.innerHTML = ''; // 清空現有內容
 
-            // 過濾掉無效的組別 (比如 groupId 為 null 或不存在)
-            const validGroups = groups.filter(group => group._id && group._id !== 'null');
-
-            // 如果沒有有效組別，不顯示“暫無組別”
-            if (validGroups.length === 0) {
-                return; // 不顯示任何內容，避免“暫無組別”
-            }
-
-            // 動態生成組別列表
-            validGroups.forEach(group => {
-                const groupId = group._id;
-                const groupItem = document.createElement('div');
-                groupItem.className = 'group-item';
-                groupItem.innerHTML = `
-                    <h4>組別 ${groupId}</h4>
-                    <ul id="group-${groupId}-members">
-                        ${group.members.length > 0 ? group.members.map(member => `<li>${member}</li>`).join('') : '<li>無成員</li>'}
-                    </ul>
-                    <button class="add-member-btn" data-group-id="${groupId}">新增組員</button>
-                    <button class="delete-group-btn" data-group-id="${groupId}">刪除組別</button>
-                `;
-                groupListContainer.appendChild(groupItem);
-            });
-        } catch (error) {
-            console.error('無法獲取組別:', error);
-        }
-    }
-
-    // 創建新組別
-    async function createNewGroup() {
-        try {
-            const response = await axios.post('/api/create-group', { courseType });
-            const newGroupId = response.data.newGroupId;
-
-            if (newGroupId) {
-                alert(`新組別已創建，組別編號：${newGroupId}`);
-                fetchGroups();  // 確保創建新組別後刷新列表
+            if (!group || group.members.length === 0) {
+                groupMembersList.innerHTML = '<li>無成員</li>';
             } else {
-                alert('創建新組別失敗');
+                group.members.forEach(member => {
+                    const memberItem = document.createElement('li');
+                    memberItem.textContent = `${member} (無班級)`;  // 可以根據需要顯示更多資訊
+                    groupMembersList.appendChild(memberItem);
+                });
             }
         } catch (error) {
-            console.error('創建新組別失敗:', error);
-            alert('創建新組別失敗');
-        }
-    }
-
-    // 刪除組別
-    async function deleteGroup(groupId) {
-        try {
-            await axios.delete(`/api/groups/${groupId}?courseType=${courseType}`);
-            alert('組別已刪除');
-            fetchGroups();  // 刪除後刷新列表
-        } catch (error) {
-            console.error('刪除組別失敗:', error);
-            alert('刪除組別失敗');
+            console.error(`無法獲取組別 ${groupId} 的成員:`, error);
+            groupMembersList.innerHTML = '<li>無法載入成員</li>';
         }
     }
 
@@ -159,13 +137,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 studentItem.className = 'student-item';
                 studentItem.innerHTML = `
                     <input type="checkbox" class="student-checkbox" data-id="${student._id}">
-                    ${student.name} (${student.class || ''})
+                    ${student.name} (${student.class || '無班級'})
                 `;
                 modalContent.appendChild(studentItem);
             });
 
             // 打開彈窗
-            const modal = document.getElementById('addMemberModal');
             modal.style.display = 'flex';
 
             // 確認新增組員
@@ -186,8 +163,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
 
                     alert('分組成功');
-                    fetchGroups(); // 更新組別列表
-                    document.getElementById('addMemberModal').style.display = 'none';
+                    modal.style.display = 'none';
+                    await fetchGroupMembers(groupId); // 更新該組的成員顯示
                 } catch (error) {
                     console.error('分組失敗:', error);
                     alert('分組失敗');
@@ -195,12 +172,12 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         } catch (error) {
             console.error('無法獲取學生資料:', error);
+            alert('無法載入學生資料');
         }
     }
 
     // 關閉彈窗
     document.getElementById('closeModal').addEventListener('click', () => {
-        const modal = document.getElementById('addMemberModal');
         modal.style.display = 'none';
     });
 
@@ -210,33 +187,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const groupId = e.target.getAttribute('data-group-id');
             showAddMemberModal(groupId);
         }
-
-        if (e.target && e.target.classList.contains('delete-group-btn')) {
-            const groupId = e.target.getAttribute('data-group-id');
-            if (confirm('確定要刪除該組別嗎？')) {
-                deleteGroup(groupId);
-            }
-        }
     });
 
     // 監聽按鈕點擊
     internalBtn.addEventListener('click', () => {
         courseType = 'internal';
-        fetchGroups(); // 更新組別列表
+        initializeGroups(); // 更新組別列表
     });
 
     externalBtn.addEventListener('click', () => {
         courseType = 'external';
-        fetchGroups(); // 更新組別列表
+        initializeGroups(); // 更新組別列表
     });
 
-    // 監聽“創建新組別”按鈕點擊
-    createGroupBtn.addEventListener('click', createNewGroup);
+    // 初次加載組別列表
+    initializeGroups(); // 直接初始化顯示 10 個組別
 
-    // 初次加載分組列表
-    fetchGroups();
+
+    
 });
-
     </script>
 </body>
 </html>

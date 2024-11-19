@@ -119,7 +119,7 @@ router.get('/identity', function(req, res) {
 router.get('/setgroup',(req,res)=>{
   res.sendFile(path.join(__dirname, '../views/setgroup.html'));
 })
-/////////????????
+
 router.put('/api/update-group', async (req, res) => {
   const { courseType, userIds, groupId } = req.body;
   const model = courseType === 'internal' ? StudentUserModel : ExternalUserModel;
@@ -137,76 +137,28 @@ router.put('/api/update-group', async (req, res) => {
   }
 });
 
-// 獲取所有組別
+
+
 router.get('/api/groups', async (req, res) => {
   const { courseType } = req.query;
   const model = courseType === 'internal' ? StudentUserModel : ExternalUserModel;
 
   try {
       const groups = await model.aggregate([
-          { $match: { access: true } },  // 確保只查找允許訪問的使用者
-          { $group: { _id: "$groupId", members: { $push: "$name" } } },
-          { $sort: { _id: 1 } }
+          { $match: { access: true } },  //only access
+          { $group: { _id: "$groupId", members: { $push: "$name" } } }, // 每組的成員名稱
+          { $sort: { _id: 1 } } // 根據組別 ID 排序
       ]);
 
-      res.json({ groups });
+      res.json({ groups }); 
   } catch (error) {
+      console.error('獲取組別失敗:', error);
       res.status(500).json({ message: '獲取組別失敗' });
   }
 });
 
-// 新增組別
-router.post('/api/create-group', async (req, res) => {
-  const { courseType } = req.body;
-  const model = courseType === 'internal' ? StudentUserModel : ExternalUserModel;
 
-  try {
-    // 獲取當前組別的最大編號
-    const lastGroup = await model.aggregate([
-      { $group: { _id: null, maxGroupId: { $max: "$groupId" } } }
-    ]);
-    const newGroupId = lastGroup.length > 0 ? lastGroup[0].maxGroupId + 1 : 1;  // 預設從1開始
-
-    // 創建新的組別
-    const newGroup = {
-      groupId: newGroupId,
-      members: []  // 新組別沒有成員
-    };
-
-    // 假設將組別創建到資料庫
-    await model.create(newGroup);
-
-    // 返回新的組別編號
-    res.json({ newGroupId });
-  } catch (error) {
-    console.error('創建組別失敗:', error);
-    res.status(500).json({ message: '創建組別失敗' });
-  }
-});
-
-// 刪除組別
-router.delete('/api/groups/:groupId', async (req, res) => {
-  const { groupId } = req.params;
-
-  try {
-    // 刪除組別對應的所有使用者的 groupId
-    const result = await Promise.all([
-      StudentUserModel.updateMany({ groupId }, { $unset: { groupId: "" } }),
-      ExternalUserModel.updateMany({ groupId }, { $unset: { groupId: "" } })
-    ]);
-
-    console.log(`刪除組別 ${groupId}，影響了 ${result[0].modifiedCount} 名學生和 ${result[1].modifiedCount} 名外部使用者。`);
-
-    res.json({ message: '組別刪除成功' });
-  } catch (error) {
-    console.error('刪除組別失敗:', error);
-    res.status(500).json({ message: '刪除組別失敗' });
-  }
-});
-
-
-
-// 僅已認證用戶可查詢學生
+// 查詢已認證用戶
 router.get('/api/students', async (req, res) => {
   const { courseType, name } = req.query;
   const model = courseType === 'internal' ? StudentUserModel : ExternalUserModel;

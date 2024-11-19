@@ -8,7 +8,7 @@ let StudentUser=new mongoose.Schema({
     academicYear: { type: String, required: true }, // 學年
     gradeLevel: { type: String, required: true },  // 年級
     groupRole: { type: String, default: '成員' }, // 預設為普通成員
-
+    identity: { type: String, required: true, default: 'student' },
     access:{
         type:Boolean,
         default:false,
