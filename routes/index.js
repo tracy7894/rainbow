@@ -110,7 +110,7 @@ router.get('/chat',checkLogin,(req, res) => {
 router.get('/publicRoom',checkLogin,(req, res) => {
 
   console.log("id="+req.session.groupId)
-  res.render('publicRoom', { username: req.session.username ,groupId:"publicRoom"});
+  res.render('publicRoom', { username: req.session.username ,groupId:"publicRoom",identity:req.session.identity});
   
 });
 
@@ -118,7 +118,7 @@ router.get('/identity', function(req, res) {
   res.render('identity');  
 });
 
-router.get('/setgroup',(req,res)=>{
+router.get('/setgroup',checkLogin,(req,res)=>{
   res.sendFile(path.join(__dirname, '../views/setgroup.html'));
 })
 
@@ -180,7 +180,7 @@ router.get('/api/students', async (req, res) => {
 
 
 
-router.get('/studentList', async (req, res) => {
+router.get('/studentList',checkLogin, async (req, res) => {
   try {
     res.sendFile(path.join(__dirname, '../views/studentList.html'));
   } catch (error) {
@@ -328,11 +328,16 @@ router.get('/api/documents', async (req, res) => {
 // 更新文本
 router.put('/api/documents/:id', async (req, res) => {
   const { id } = req.params;
-  const { content } = req.body;
+  const { title, content } = req.body;
 
-  const document = await DocumentDataModel.findByIdAndUpdate(id, { content }, { new: true });
+  const updateData = {};
+  if (title) updateData.title = title; // 更新標題
+  if (content) updateData.content = content; // 更新內容
+
+  const document = await DocumentDataModel.findByIdAndUpdate(id, updateData, { new: true });
   res.json(document);
 });
+
 
 // 新增文本
 router.post('/api/documents', async (req, res) => {

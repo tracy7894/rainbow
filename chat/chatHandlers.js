@@ -5,8 +5,7 @@ module.exports = (io) => {
     const groupId = socket.handshake.query.groupId || 'publicRoom';
     const identity = socket.handshake.query.identity ; // 從前端傳遞身份
 
-    // 根據身份區分聊天室房間
-    const room = `${groupId}_${identity}`; // 以 groupId 和 identity（學生或校外人士）區分房間
+    const room = `${groupId}_${identity}`; // 以 groupId 和 identity區分
     socket.join(room); // 加入相應的聊天室
     console.log(`A ${identity} user connected to room: ${room}`);
 
