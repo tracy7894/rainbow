@@ -140,8 +140,8 @@
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${user.name}</td>
-                    <td>${user.class || 'N/A'}</td>
-                    <td>${user.groupId || 'N/A'}</td>
+                    <td>${user.class || '無班級'}</td>
+                    <td>${user.groupId || '無組別'}</td>
                 `;
                 userTableBody.appendChild(tr);
             });
