@@ -112,7 +112,8 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 group.members.forEach(member => {
                     const memberItem = document.createElement('li');
-                    memberItem.textContent = `${member} (無班級)`;  // 可以根據需要顯示更多資訊
+                    memberItem.textContent = `${member.name}(${member.class})`;
+                    
                     groupMembersList.appendChild(memberItem);
                 });
             }

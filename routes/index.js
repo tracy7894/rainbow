@@ -148,10 +148,14 @@ router.get('/api/groups', async (req, res) => {
   try {
       const groups = await model.aggregate([
           { $match: { access: true } },  //only access
-          { $group: { _id: "$groupId", members: { $push: "$name" } } }, // 每組的成員名稱
+          { $group: {
+            _id: "$groupId",
+            members: { $push: {name:"$name",class:"$class"} },
+
+           } }, // 每組的成員名稱
           { $sort: { _id: 1 } } // 根據組別 ID 排序
       ]);
-
+   
       res.json({ groups }); 
   } catch (error) {
       console.error('獲取組別失敗:', error);
