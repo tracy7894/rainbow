@@ -128,16 +128,115 @@ router.get('/setgroup',checkLogin,(req,res)=>{
 
 
 router.delete('/api/groups/:id', async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.params;  // 用 :id 接收組別ID
+  const { courseType } = req.query;
+
   try {
-      const deletedGroup = await GroupIDDataModel.findByIdAndDelete(id);
-      if (!deletedGroup) return res.status(404).json({ message: '組別不存在' });
-      res.json({ success: true, message: '組別已刪除' });
+    // 查找並刪除指定的組別
+    const group = await GroupIDDataModel.findOneAndDelete({ groupId: id, type: courseType });
+
+    if (!group) {
+      return res.status(404).json({ success: false, message: '找不到該組別' });
+    }
+
+    // 如果需要，這裡可以進一步調整其他組別的編號
+    res.json({ success: true });
   } catch (error) {
-      console.error('刪除組別失敗:', error);
-      res.status(500).json({ message: '刪除組別失敗' });
+    console.error('刪除組別錯誤:', error);
+    res.status(500).json({ success: false, message: '刪除組別失敗' });
+  }
+ });
+// router.put('/api/groups/adjust-group-ids', async (req, res) => {
+//   const { courseType, deletedGroupId } = req.query;
+//   console.log('調用 adjust-group-ids API');
+//   try {
+//     // 獲取該 courseType 下的所有組別並按 groupId 升序排列
+//     const groups = await GroupIDDataModel.find({ type: courseType }).sort({ groupId: 1 });
+
+//     // 查找被刪除的組別
+//     let groupToDelete = groups.find(group => group.groupId === Number(deletedGroupId));
+    
+//     if (!groupToDelete) {
+//       return res.status(404).json({ message: '組別不存在' });
+//     }
+    
+//     // 將刪除組別後的所有組別的 ID 減 1
+//     for (let group of groups) {
+//       if (group.groupId > deletedGroupId) {
+//         group.groupId -= 1;
+//         await group.save();  // 保存更新後的組別
+//       }
+//     }
+
+//     // 更新所有該組別的學生的 groupId
+//     const students = await StudentUserModel.find({ groupId: { $gt: deletedGroupId } });
+//     for (let student of students) {
+//       student.groupId -= 1;
+//       await student.save();  // 更新學生的 groupId
+//     }
+
+//     res.json({ success: true, message: '組別編號已更新' });
+//   } catch (error) {
+//     console.error('更新組別編號失敗:', error);
+//     res.status(500).json({ message: '更新組別編號失敗' });
+//   }
+// });
+router.put('/api/groups/adjust-group-ids', async (req, res) => {
+  const { courseType, deletedGroupId } = req.query;
+  console.log('調用 adjust-group-ids API', courseType, deletedGroupId);
+  try {
+    const groups = await GroupIDDataModel.find({ type: courseType }).sort({ groupId: 1 });
+    let groupToDelete = groups.find(group => group.groupId === Number(deletedGroupId));
+
+    if (!groupToDelete) {
+      return res.status(404).json({ message: '組別不存在' });
+    }
+
+    console.log('找到組別，開始調整編號');
+
+    // 更新組別編號
+    for (let group of groups) {
+      if (group.groupId > deletedGroupId) {
+        group.groupId -= 1;
+        await group.save();
+      }
+    }
+
+    // 更新學生的 groupId
+    const students = await StudentUserModel.find({ groupId: { $gt: deletedGroupId } });
+    for (let student of students) {
+      student.groupId -= 1;
+      await student.save();
+    }
+
+    console.log('組別編號已更新');
+    res.json({ success: true, message: '組別編號已更新' });
+  } catch (error) {
+    console.error('更新組別編號失敗:', error);
+    res.status(500).json({ message: '更新組別編號失敗' });
   }
 });
+router.put('/api/groups/update-student-group', async (req, res) => {
+  const { courseType, groupId } = req.body;
+  
+  try {
+    // 查找並更新屬於該組的學生
+    const studentsToUpdate = await StudentUserModel.updateMany(
+      { groupId, courseType }, 
+      { $set: { groupId: null } } // 將 groupId 設為 null
+    );
+
+    if (studentsToUpdate.modifiedCount > 0) {
+      return res.json({ success: true, message: '組員的組別編號已更新為 null' });
+    } else {
+      return res.status(404).json({ success: false, message: '未找到該組的學生' });
+    }
+  } catch (error) {
+    console.error('更新學生組別錯誤:', error);
+    res.status(500).json({ success: false, message: '更新學生組別錯誤' });
+  }
+});
+
 
 router.get('/api/groups', async (req, res) => {
   try {

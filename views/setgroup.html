@@ -67,6 +67,7 @@
     <div id="addMemberModal" class="modal">
         <div class="modal-content">
             <h4>新增組員</h4>
+            <button id="deleteGroupBtn">刪除組別</button>
             <div id="modalContent"></div>
             <button id="closeModal">取消</button>
             <button id="confirmAddMember">確認新增</button>
@@ -75,7 +76,6 @@
 
     <div id="actionPanel">
         <button id="addGroupBtn">新增組別</button>
-        <button id="deleteGroupBtn">刪除組別</button>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
@@ -94,11 +94,11 @@
                 try {
                     // 獲取組別資料
                     const groupResponse = await axios.get(`/api/groups?courseType=${courseType}`);
-                    const groups = groupResponse.data.groups; // 確認 groups 是正確的資料
+                    const groups = groupResponse.data.groups;
 
                     // 獲取所有學生資料
                     const studentResponse = await axios.get(`/api/students?courseType=${courseType}`);
-                    const students = studentResponse.data.students; // 確認 students 是正確的資料
+                    const students = studentResponse.data.students;
 
                     groupListContainer.innerHTML = ''; // 清空加載狀態
 
@@ -115,12 +115,13 @@
                             : '<li>無成員</li>'; // 如果沒有成員顯示提示
 
                         groupItem.innerHTML = `
-                <h4>組別 ${group.groupId}</h4>
-                <ul>
-                    ${membersList}
-                </ul>
-                <button class="add-member-btn" data-group-id="${group.groupId}">新增組員</button>
-            `;
+                            <h4>組別 ${group.groupId}</h4>
+                            <ul>
+                                ${membersList}
+                            </ul>
+                            <button class="add-member-btn" data-group-id="${group.groupId}">新增組員</button>
+                            <button class="delete-group-btn" data-group-id="${group.groupId}">刪除組別</button> <!-- 新增刪除按鈕 -->
+                        `;
                         groupListContainer.appendChild(groupItem);
                     });
                 } catch (error) {
@@ -128,13 +129,6 @@
                     groupListContainer.innerHTML = '<div>無法載入組別</div>';
                 }
             }
-
-
-
-
-
-
-
 
             // 顯示新增組員彈窗
             async function showAddMemberModal(groupId) {
@@ -144,9 +138,9 @@
 
                     const modalContent = document.getElementById('modalContent');
                     modalContent.innerHTML = `
-                <input type="text" id="searchInput" placeholder="搜索學生姓名" style="width: 100%; margin-bottom: 10px; padding: 8px;">
-                <div id="studentList"></div>
-            `;
+                        <input type="text" id="searchInput" placeholder="搜索學生姓名" style="width: 100%; margin-bottom: 10px; padding: 8px;">
+                        <div id="studentList"></div>
+                    `;
 
                     const studentList = document.getElementById('studentList');
 
@@ -157,9 +151,9 @@
                             const studentItem = document.createElement('div');
                             studentItem.className = 'student-item';
                             studentItem.innerHTML = `
-                        <input type="checkbox" class="student-checkbox" data-id="${student._id}">
-                        ${student.name} (${student.class || '無班級'})
-                    `;
+                                <input type="checkbox" class="student-checkbox" data-id="${student._id}">
+                                ${student.name} (${student.class || '無班級'})
+                            `;
                             studentList.appendChild(studentItem);
                         });
                     };
@@ -177,7 +171,6 @@
                     });
 
                     modal.style.display = 'flex';
-
 
                     function closeModal() {
                         modal.style.display = 'none';
@@ -217,35 +210,43 @@
                     alert('無法載入學生資料');
                 }
             }
-            async function createGroup(courseType) {
-                try {
-                    const response = await axios.post('/api/groups', { courseType });
-
-                    if (response.data.success) {
-                        alert('新增組別成功');
-                        initializeGroups();  // 刷新組別列表
-                    } else {
-                        alert('新增組別失敗');
-                    }
-                } catch (error) {
-                    console.error('新增組別失敗:', error);
-                    alert('新增組別失敗');
-                }
-            }
 
             // 刪除組別
             async function deleteGroup(groupId) {
-                if (confirm('確定刪除這個組別？')) {
-                    try {
-                        await axios.delete(`/api/groups/${groupId}?courseType=${courseType}`);
-                        alert('組別刪除成功');
-                        initializeGroups(); // 刷新組別列表
-                    } catch (error) {
-                        console.error('刪除組別失敗:', error);
-                        alert('刪除組別失敗');
-                    }
+    if (confirm('確定刪除這個組別？')) {
+        try {
+            // 步驟1：刪除組別
+            const deleteResponse = await axios.delete(`/api/groups/${groupId}?courseType=${courseType}`);
+            if (deleteResponse.data.success) {
+                // 步驟2：更新該組的所有學生的 groupId 為 null
+                const updateStudentsResponse = await axios.put('/api/groups/update-student-group', {
+                    courseType,
+                    groupId // 傳遞被刪除的組別ID
+                });
+
+                // 步驟3：調用 adjust-group-ids API 來更新組別編號
+                const adjustResponse = await axios.put('/api/groups/adjust-group-ids', {
+                    courseType,
+                    deletedGroupId: groupId
+                });
+
+                if (adjustResponse.data.success && updateStudentsResponse.data.success) {
+                    alert('組別刪除成功，組員已解除組別，組別編號已更新');
+                    initializeGroups();  // 重新加載組別列表
+                } else {
+                    alert('組員更新或組別編號調整失敗');
                 }
+            } else {
+                alert('刪除組別失敗');
             }
+        } catch (error) {
+            console.error('刪除組別錯誤:', error);
+            alert('刪除組別失敗');
+        }
+    }
+}
+
+
 
             // 處理組別刪除
             groupListContainer.addEventListener('click', (e) => {
@@ -288,7 +289,6 @@
 
             // 初次加載組別列表
             initializeGroups(); // 直接初始化顯示組別
-
         });
     </script>
 </body>
