@@ -127,8 +127,11 @@
                     <td>${user.gradeLevel || 'N/A'}</td>
                     <td>${user.academicYear || 'N/A'}</td>
                     <td>${user.groupId || 'N/A'}</td>
-                    <td><button onclick="verifyUser('${user._id}', document.getElementById('userType').value)">認證</button></td>
-
+                    <td>
+                        <button onclick="verifyUser('${user._id}', document.getElementById('userType').value)">認證</button>
+                        <button onclick="rejectUser('${user._id}', document.getElementById('userType').value)">拒絕</button>
+                    </td>
+                    
                 `;
                 userTableBody.appendChild(tr);
             });
@@ -145,6 +148,18 @@
                 document.getElementById('error').textContent = '認證失敗';
             }
         }
+        async function rejectUser(userId, userType) {
+            try {
+                console.log(`Rejecting User - ID: ${userId}, Type: ${userType}`);
+                const response = await axios.delete(`/api/users/${userId}?type=${userType}`);
+                document.getElementById('message').textContent = response.data.message;
+                fetchUsers(); // 更新列表
+            } catch (error) {
+                console.error('拒絕用戶時發生錯誤:', error);
+                document.getElementById('error').textContent = '拒絕失敗';
+            }
+        }
+
 
 
     </script>

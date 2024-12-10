@@ -74,107 +74,108 @@ document.addEventListener('DOMContentLoaded', () => {
     const externalBtn = document.getElementById('externalBtn');
     const modal = document.getElementById('addMemberModal');
     let courseType = 'internal'; // 預設顯示校內學生組別
+    async function initializeGroups() {
+    groupListContainer.innerHTML = '<div>載入中...</div>'; // 顯示加載狀態
+    try {
+        const response = await axios.get(`/api/groups?courseType=${courseType}`);
+        const groups = response.data.groups;
 
-    // 初始化顯示 10 個組別
-    function initializeGroups() {
-        groupListContainer.innerHTML = ''; // 清空現有組別資料
+        groupListContainer.innerHTML = ''; // 清空加載狀態
 
-        // 生成 10 個組別
-        for (let i = 1; i <= 10; i++) {
+        groups.forEach(group => {
             const groupItem = document.createElement('div');
             groupItem.className = 'group-item';
             groupItem.innerHTML = `
-                <h4>組別 ${i}</h4>
-                <ul id="group-${i}-members">
-                    <li>載入中...</li>
+                <h4>組別 ${group._id}</h4>
+                <ul>
+                    ${group.members.map(member => `<li>${member}</li>`).join('')}
                 </ul>
-                <button class="add-member-btn" data-group-id="${i}">新增組員</button>
+                <button class="add-member-btn" data-group-id="${group._id}">新增組員</button>
             `;
             groupListContainer.appendChild(groupItem);
-            fetchGroupMembers(`${i}`) // 初始化組別成員
-        }
-
+        });
+    } catch (error) {
+        console.error('獲取組別數據失敗:', error);
+        groupListContainer.innerHTML = '<div>無法載入組別</div>';
     }
-
-    // 從後端抓取指定組別的成員
-    async function fetchGroupMembers(groupId) {
-        const groupMembersList = document.getElementById(`group-${groupId}-members`);
-        try {
-            const response = await axios.get(`/api/groups?courseType=${courseType}`);
-            const groups = response.data.groups;
-
-            // 找到對應的組別
-            const group = groups.find(g => g._id === groupId);
-            groupMembersList.innerHTML = ''; // 清空現有內容
-
-            if (!group || group.members.length === 0) {
-                groupMembersList.innerHTML = '<li>無成員</li>';
-            } else {
-                group.members.forEach(member => {
-                    const memberItem = document.createElement('li');
-                    memberItem.textContent = `${member} (無班級)`;  // 可以根據需要顯示更多資訊
-                    groupMembersList.appendChild(memberItem);
-                });
-            }
-        } catch (error) {
-            console.error(`無法獲取組別 ${groupId} 的成員:`, error);
-            groupMembersList.innerHTML = '<li>無法載入成員</li>';
-        }
-    }
+}
 
     // 顯示新增組員彈窗
     async function showAddMemberModal(groupId) {
-        try {
-            const response = await axios.get(`/api/students?courseType=${courseType}`);
-            const students = response.data.students;
+    try {
+        const response = await axios.get(`/api/students?courseType=${courseType}`);
+        const students = response.data.students;
 
-            const modalContent = document.getElementById('modalContent');
-            modalContent.innerHTML = '';
+        const modalContent = document.getElementById('modalContent');
+        modalContent.innerHTML = `
+            <input type="text" id="searchInput" placeholder="搜索學生姓名" style="width: 100%; margin-bottom: 10px; padding: 8px;">
+            <div id="studentList"></div>
+        `;
 
-            // 渲染未分組學生
-            students.forEach(student => {
+        const studentList = document.getElementById('studentList');
+
+        // 渲染所有學生
+        const renderStudents = (filteredStudents) => {
+            studentList.innerHTML = '';
+            filteredStudents.forEach(student => {
                 const studentItem = document.createElement('div');
                 studentItem.className = 'student-item';
                 studentItem.innerHTML = `
                     <input type="checkbox" class="student-checkbox" data-id="${student._id}">
                     ${student.name} (${student.class || '無班級'})
                 `;
-                modalContent.appendChild(studentItem);
+                studentList.appendChild(studentItem);
             });
+        };
 
-            // 打開彈窗
-            modal.style.display = 'flex';
+        renderStudents(students);
 
-            // 確認新增組員
-            document.getElementById('confirmAddMember').onclick = async () => {
-                const selectedStudentIds = Array.from(document.querySelectorAll('.student-checkbox:checked'))
-                    .map(checkbox => checkbox.getAttribute('data-id'));
+        // 搜索功能
+        const searchInput = document.getElementById('searchInput');
+        searchInput.addEventListener('input', () => {
+            const keyword = searchInput.value.toLowerCase();
+            const filteredStudents = students.filter(student => 
+                student.name.toLowerCase().includes(keyword)
+            );
+            renderStudents(filteredStudents);
+        });
 
-                if (selectedStudentIds.length === 0) {
-                    alert('請選擇至少一位學生');
-                    return;
-                }
+        // 打開彈窗
+        modal.style.display = 'flex';
 
-                try {
-                    await axios.put('/api/update-group', {
-                        courseType,
-                        userIds: selectedStudentIds,
-                        groupId
-                    });
+        // 確認新增組員
+        document.getElementById('confirmAddMember').onclick = async () => {
+    const selectedStudentIds = Array.from(document.querySelectorAll('.student-checkbox:checked'))
+        .map(checkbox => checkbox.getAttribute('data-id'));
 
-                    alert('分組成功');
-                    modal.style.display = 'none';
-                    await fetchGroupMembers(groupId); // 更新該組的成員顯示
-                } catch (error) {
-                    console.error('分組失敗:', error);
-                    alert('分組失敗');
-                }
-            };
-        } catch (error) {
-            console.error('無法獲取學生資料:', error);
-            alert('無法載入學生資料');
-        }
+    if (selectedStudentIds.length === 0) {
+        alert('請選擇至少一位學生');
+        return;
     }
+
+    try {
+        await axios.put('/api/update-group', {
+            courseType,
+            userIds: selectedStudentIds,
+            groupId
+        });
+
+        alert('分組成功');
+        modal.style.display = 'none';
+
+        // 更新组别列表
+        initializeGroups();  // 刷新组别列表
+    } catch (error) {
+        console.error('分組失敗:', error);
+        alert('分組失敗');
+    }
+};
+    } catch (error) {
+        console.error('無法獲取學生資料:', error);
+        alert('無法載入學生資料');
+    }
+}
+
 
     // 關閉彈窗
     document.getElementById('closeModal').addEventListener('click', () => {

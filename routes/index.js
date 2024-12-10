@@ -70,6 +70,9 @@ router.post('/api/login', async (req, res) => {
       req.session.username = student.username;
       req.session.groupId = student.groupId;
       req.session.identity = student.identity || 'student';
+      req.session.userId=student.id;
+      console.log("id="+req.session.userId);
+
       return res.json({ success: true, message: "welcome " + student.username, redirectUrl: '/index' });
     }
 
@@ -314,6 +317,59 @@ router.put('/api/users/:id', async (req, res) => {
       res.json({ message: '用戶已成功認證', user });
   } catch (error) {
       console.error('認證用戶時發生錯誤:', error);
+      res.status(500).json({ message: '伺服器錯誤，請稍後再試' });
+  }
+});
+
+
+router.put('/api/users/:id', async (req, res) => {
+  const { id } = req.params;
+  const { type } = req.query;
+  try {
+      const UserModel = getUserModel(type);
+      const user = await UserModel.findByIdAndUpdate(id, { access: true }, { new: true });
+      if (!user) return res.status(404).json({ message: '用戶不存在' });
+      res.json({ message: '用戶已認證', user });
+  } catch (error) {
+      console.error('用戶更新失敗:', error);
+      res.status(500).json({ message: '伺服器錯誤' });
+  }
+});
+router.delete('/api/users/:id', async (req, res) => {
+  try {
+      const { id } = req.params;
+      const { type } = req.query;
+
+      if (!type || !['student', 'external'].includes(type)) {
+          return res.status(400).json({ message: '請提供有效的用戶類型 (student 或 external)' });
+      }
+
+      let UserModel;
+      if (type === 'student') {
+          UserModel = StudentUserModel;
+      } else if (type === 'external') {
+          UserModel = ExternalUserModel;
+      }
+      console.log("name="+req.session.username)
+      console.log("id="+id)
+      // 從資料庫刪除用戶
+      const user = await UserModel.findByIdAndDelete(id);
+
+      if (!user) {
+          return res.status(404).json({ message: '用戶不存在' });
+      }
+      if (req.session.userId === id) {
+        req.session.destroy(err => {
+            if (err) {
+                console.error('銷毀 session 時發生錯誤:', err);
+                return res.status(500).json({ message: '伺服器錯誤，請稍後再試' });
+            }
+            console.log(`用戶 ${id} 的 session 已刪除`);
+        });
+      }
+      res.json({ message: '用戶已被拒絕並刪除' });
+  } catch (error) {
+      console.error('拒絕用戶時發生錯誤:', error);
       res.status(500).json({ message: '伺服器錯誤，請稍後再試' });
   }
 });
