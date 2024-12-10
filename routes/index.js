@@ -8,6 +8,7 @@ const StudentUserModel=require('../data/StudentUser') //學生
 const ExternalUserModel=require('../data/ExternalUser') //校外
 const MaterialsDataModel=require('../data/MaterialsData') //教  材
 const DocumentDataModel=require('../data/documentData')//寶典
+const GroupIDDataModel=require('../data/GroupIDData')//組別編號
 let checkLogin=require('../middleware/checkLogin');
 const { group } = require('console');
 const path = require('path');
@@ -125,6 +126,57 @@ router.get('/setgroup',checkLogin,(req,res)=>{
   res.sendFile(path.join(__dirname, '../views/setgroup.html'));
 })
 
+
+router.delete('/api/groups/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+      const deletedGroup = await GroupIDDataModel.findByIdAndDelete(id);
+      if (!deletedGroup) return res.status(404).json({ message: '組別不存在' });
+      res.json({ success: true, message: '組別已刪除' });
+  } catch (error) {
+      console.error('刪除組別失敗:', error);
+      res.status(500).json({ message: '刪除組別失敗' });
+  }
+});
+
+router.get('/api/groups', async (req, res) => {
+  try {
+    const groups = await GroupIDDataModel.find();
+    res.json({ groups });
+    console.log(groups)
+  } catch (error) {
+    console.error('查詢組別失敗:', error);
+    res.status(500).json({ message: '查詢組別失敗' });
+  }
+});
+router.post('/api/groups', async (req, res) => {
+  const { courseType } = req.body;
+  console.log('Received courseType:', courseType);  // 
+  if (!courseType) {
+    return res.status(400).json({ message: 'courseType 是必需的' });
+  }
+
+  try {
+      const maxGroup = await GroupIDDataModel.findOne({ type: courseType }).sort({ groupId: -1 });
+      console.log('Max Group:', maxGroup);  // 输出查询结果
+
+      const newGroupId = maxGroup ? maxGroup.groupId + 1 : 1;
+
+      // 新增组别
+      const newGroup = await GroupIDDataModel.create({
+        type: courseType,
+        groupId: newGroupId,
+        members: []
+      });
+
+      // 返回新增的组别
+      res.json({ success: true, group: newGroup });
+  } catch (error) {
+      console.error('新增組別失敗:', error);
+      res.status(500).json({ message: '新增組別失敗' });
+  }
+});
+
 router.put('/api/update-group', async (req, res) => {
   const { courseType, userIds, groupId } = req.body;
   const model = courseType === 'internal' ? StudentUserModel : ExternalUserModel;
@@ -141,28 +193,6 @@ router.put('/api/update-group', async (req, res) => {
       res.status(500).json({ message: '分組失敗' });
   }
 });
-
-
-
-router.get('/api/groups', async (req, res) => {
-  const { courseType } = req.query;
-  const model = courseType === 'internal' ? StudentUserModel : ExternalUserModel;
-
-  try {
-      const groups = await model.aggregate([
-          { $match: { access: true } },  //only access
-          { $group: { _id: "$groupId", members: { $push: "$name" } } }, // 每組的成員名稱
-          { $sort: { _id: 1 } } // 根據組別 ID 排序
-      ]);
-
-      res.json({ groups }); 
-  } catch (error) {
-      console.error('獲取組別失敗:', error);
-      res.status(500).json({ message: '獲取組別失敗' });
-  }
-});
-
-
 // 查詢已認證用戶
 router.get('/api/students', async (req, res) => {
   const { courseType, name } = req.query;
