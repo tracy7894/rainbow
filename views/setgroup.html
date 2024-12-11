@@ -67,7 +67,7 @@
     <div id="addMemberModal" class="modal">
         <div class="modal-content">
             <h4>新增組員</h4>
-            <button id="deleteGroupBtn">刪除組別</button>
+
             <div id="modalContent"></div>
             <button id="closeModal">取消</button>
             <button id="confirmAddMember">確認新增</button>
@@ -213,38 +213,39 @@
 
             // 刪除組別
             async function deleteGroup(groupId) {
-    if (confirm('確定刪除這個組別？')) {
-        try {
-            // 步驟1：刪除組別
-            const deleteResponse = await axios.delete(`/api/groups/${groupId}?courseType=${courseType}`);
-            if (deleteResponse.data.success) {
-                // 步驟2：更新該組的所有學生的 groupId 為 null
-                const updateStudentsResponse = await axios.put('/api/groups/update-student-group', {
-                    courseType,
-                    groupId // 傳遞被刪除的組別ID
-                });
+                if (confirm('確定刪除這個組別？')) {
+                    try {
+                       
+                        const deleteResponse = await axios.delete(`/api/groups/${groupId}?courseType=${courseType}`);
+                        if (deleteResponse.data.success) {
 
-                // 步驟3：調用 adjust-group-ids API 來更新組別編號
-                const adjustResponse = await axios.put('/api/groups/adjust-group-ids', {
-                    courseType,
-                    deletedGroupId: groupId
-                });
+                            const updateStudentsResponse = await axios.put('/api/groups/update-student-group', {
+                                courseType,
+                                groupId
+                            });
 
-                if (adjustResponse.data.success && updateStudentsResponse.data.success) {
-                    alert('組別刪除成功，組員已解除組別，組別編號已更新');
-                    initializeGroups();  // 重新加載組別列表
-                } else {
-                    alert('組員更新或組別編號調整失敗');
+                            // 步驟3：調用 adjust-group-ids API 來更新組別編號
+                            //  console.log("courseType"+courseType)
+                            const adjustResponse = await axios.put('/api/groups/adjust-group-ids', {
+                                courseType,
+                                deletedGroupId: groupId
+                            });
+
+                            if (adjustResponse.data.success && updateStudentsResponse.data.success) {
+                                alert('組別刪除成功，組員已解除組別，組別編號已更新');
+                                initializeGroups();  // 重新加載組別列表
+                            } else {
+                                alert('組員更新或組別編號調整失敗');
+                            }
+                        } else {
+                            alert('刪除組別失敗');
+                        }
+                    } catch (error) {
+                        console.error('刪除組別錯誤:', error);
+                        alert('刪除組別失敗');
+                    }
                 }
-            } else {
-                alert('刪除組別失敗');
             }
-        } catch (error) {
-            console.error('刪除組別錯誤:', error);
-            alert('刪除組別失敗');
-        }
-    }
-}
 
 
 
