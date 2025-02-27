@@ -1,0 +1,88 @@
+erDiagram
+    StudentUser ||--o{ Group : "belongs to"
+    StudentUser ||--o{ SemesterData : "enrolled in"
+    ExternalUser ||--o{ Group : "belongs to"
+    ExternalUser ||--o{ SemesterData : "enrolled in"
+    Group ||--o{ MessageData : "contains"
+    SemesterData ||--o{ MessageData : "applies to"
+    SemesterData ||--o{ DocumentData : "applies to"
+    Group ||--o{ StudentUser : "has members"
+    DocumentData ||--o{ TextSegment : "contains"
+
+    StudentUser {
+        string username  "required"
+        string password "required"
+        string name "required"
+        ObjectId groupId FK "ref: Group, default: null"
+        string class "required"
+        string academicYear "required"
+        string gradeLevel "required"
+        number groupRole "default: 0"
+        number identity "required, default: 0"
+        boolean access "required, default: false"
+        ObjectId semester FK "ref: SemesterData, required"
+        Date createdAt "default: Date.now"
+    }
+
+    SemesterData {
+        string name  "required"
+        Date startDate "required"
+        Date endDate "required"
+    }
+
+    MessageData {
+        string username  "required"
+        string message "default: null"
+        string image "default: null"
+        ObjectId groupId FK "ref: Group, required"
+        number identity "required"
+        number studentType "required"
+        ObjectId semester FK "ref: SemesterData, required"
+        Date createdAt "default: Date.now"
+    }
+
+    Group {
+        string name  "required"
+        string description
+        ObjectId[] members FK "ref: StudentUser"
+        Date createdAt "default: Date.now"
+    }
+
+    ExternalUser {
+        string username  "required"
+        string password "required"
+        ObjectId groupId FK "ref: Group, default: null"
+        string class "required"
+        string name "required"
+        number age "required"
+        string gender "required"
+        number groupRole "default: 0"
+        number identity "required, default: 0"
+        boolean access "required, default: false"
+        ObjectId semester FK "ref: SemesterData, required"
+        Date createdAt "default: Date.now"
+    }
+
+    DocumentData {
+        string title  "required"
+        number contentType "required"
+        number bulletStyle "default: 0"
+        number numberingStyle "default: 0"
+        string video "default: null"
+        string Reference "default: null"
+        string word "default: null"
+        ObjectId semester FK "ref: SemesterData"
+        TextSegment[] content
+        Date createdAt "default: Date.now"
+    }
+
+    TextSegment {
+        string text  "required"
+        number fontSize "required, default: 1"
+        boolean bold "default: false"
+        boolean italic "default: false"
+        boolean underline "default: false"
+        boolean strike "default: false"
+        string link "default: null"
+        string image "default: null"
+    }
