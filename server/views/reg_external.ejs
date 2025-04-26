@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>外部用戶註冊</title>
+    <style>
+        body {
+            font-size: 30px;
+        }
+        #message {
+            color: green;
+            font-size: 24px;
+            margin-top: 20px;
+        }
+        #error {
+            color: red;
+            font-size: 24px;
+            margin-top: 20px;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <h1>外部用戶註冊</h1>
+    <form id="registrationForm">
+        <div>
+            <label for="username">帳號:</label><br>
+            <input name="username" type="text" id="username" required>
+        </div>
+        <div>
+            <label for="password">密碼:</label><br>
+            <input name="password" type="password" id="password" required>
+        </div>
+        <div>
+            <label for="name">姓名:</label><br>
+            <input name="name" type="text" id="name" required>
+        </div>
+        <div>
+            <label for="age">年齡:</label><br>
+            <select name="age" id="age">
+                <script>
+                    for (let i = 0; i <= 99; i++) {
+                        document.write(`<option value="${i}">${i}</option>`);
+                    }
+                </script>
+            </select>
+        </div>
+        <div>
+            <label for="gender">性別:</label><br>
+            <select name="gender" id="gender">
+                <option value="Female">女性</option>
+                <option value="Male">男性</option>
+                <option value="Unknown">不願透露</option>
+            </select>
+        </div>
+        <button type="submit">註冊</button>
+    </form>
+    <div id="message"></div>
+    <div id="error"></div>
+
+    <script>
+        document.getElementById('registrationForm').onsubmit = async function(event) {
+            event.preventDefault(); // 防止表單提交刷新頁面
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const name = document.getElementById('name').value;
+            const age = document.getElementById('age').value;
+            const gender = document.getElementById('gender').value;
+            const messageDiv = document.getElementById('message');
+            const errorDiv = document.getElementById('error');
+
+            try {
+                const response = await axios.post('/api/reg_external', {
+                    username,
+                    password,
+                    name,
+                    age,
+                    gender
+                });
+
+                // 清空錯誤訊息
+                errorDiv.textContent = '';
+                
+                // 註冊成功的處理
+                if (response.data.success) {
+                    messageDiv.textContent = response.data.message;
+                    setTimeout(() => {
+                        window.location.href = response.data.redirectUrl;
+                    }, 500); // 跳轉
+                } else {
+                    messageDiv.textContent = '';
+                    errorDiv.textContent = '註冊失敗';
+                }
+            } catch (error) {
+                messageDiv.textContent = '';
+                errorDiv.textContent = '註冊失敗: ' + (error.response ? error.response.data.message : '伺服器錯誤');
+                console.error('Error during registration:', error);
+            }
+        };
+    </script>
+</body>
+</html>

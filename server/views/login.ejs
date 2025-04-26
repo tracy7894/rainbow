@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <style>
+        body {
+            font-size: 30px;
+        }
+        #message {
+            color: green;
+            font-size: 24px;
+            margin-top: 20px;
+        }
+        #error {
+            color: red;
+            font-size: 24px;
+            margin-top: 20px;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <h3>登錄</h3>
+    <form id="loginForm">
+        <div>
+            <label for="username">帳號:</label><br>
+            <input name="username" type="text" id="username" required>
+        </div>
+        <div>
+            <label for="password">密碼:</label><br>
+            <input name="password" type="password" id="password" required>
+        </div>
+        <button type="submit">登錄</button>
+    </form>
+    <p><a href="/identity">點我註冊</a></p>
+    <div id="message"></div>
+    <div id="error"></div>
+
+    <script>
+        document.getElementById('loginForm').onsubmit = async function(event) {
+            event.preventDefault(); // 防止表單提交刷新頁面
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const messageDiv = document.getElementById('message');
+            const errorDiv = document.getElementById('error');
+
+            try {
+                const response = await axios.post('/api/login', {
+                    username,
+                    password
+                });
+
+                // 清空錯誤訊息
+                errorDiv.textContent = '';
+
+                // 登錄成功的處理
+                if (response.data.success) {
+                    messageDiv.textContent = response.data.message;
+                    setTimeout(() => {
+                        window.location.href = response.data.redirectUrl;
+                    }, 500); // 跳轉
+                } else {
+                    messageDiv.textContent = '';
+                    errorDiv.textContent = response.data.message;
+                }
+            } catch (error) {
+                messageDiv.textContent = '';
+                errorDiv.textContent = '登錄失敗: ' + (error.response ? error.response.data.message : '伺服器錯誤');
+                console.error('Login error:', error);
+            }
+        };
+    </script>
+</body>
+</html>

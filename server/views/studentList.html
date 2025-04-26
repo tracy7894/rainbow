@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用戶認證</title>
+    <style>
+        body { font-size: 20px; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th { background-color: #f4f4f4; }
+        #message {
+            color: green;
+            margin-top: 20px;
+        }
+        #error {
+            color: red;
+            margin-top: 20px;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <h1>用戶認證</h1>
+    
+    <label for="name">姓名:</label>
+    <input type="text" id="name" placeholder="輸入姓名">
+    
+    <label for="username">學號:</label>
+    <input type="text" id="username" placeholder="輸入學號">
+    
+    <label for="class">班級:</label>
+    <select id="class">
+        <option value="">全部</option>
+        <!-- 班級選項會在這裡顯示 -->
+    </select>
+    
+    <label for="gradeLevel">年級:</label>
+    <select id="gradeLevel">
+        <option value="">全部</option>
+        <option value="1">1年級</option>
+        <option value="2">2年級</option>
+        <option value="3">3年級</option>
+        <option value="4">4年級</option>
+    </select>
+    
+    <label for="academicYear">學年:</label>
+    <select id="academicYear">
+        <option value="">全部</option>
+        <option value="四技">四技</option>
+        <option value="二技">二技</option>
+        <option value="研究組">研究組</option>
+    </select>
+    
+    <label for="groupId">組別:</label>
+    <select id="groupId">
+        <option value="">全部</option>
+        <!-- 組別選項會在這裡顯示 -->
+    </select>
+    
+    <button id="searchButton">查詢</button>
+    
+    <table id="userTable">
+        <thead>
+            <tr>
+                <th>姓名</th>
+                <th>班級</th>
+                <th>組別</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- 用戶資料將顯示在此 -->
+        </tbody>
+    </table>
+    <div id="message"></div>
+    <div id="error"></div>
+
+    <script>
+        document.getElementById('searchButton').addEventListener('click', fetchUsers);
+
+        // 請求班級和組別列表並填充下拉選單
+        async function loadClassesAndGroups() {
+            try {
+                const response = await axios.get('/api/accessed_users', { params: {} });
+                const classSelect = document.getElementById('class');
+                const groupSelect = document.getElementById('groupId');
+                
+                // 動態填充班級下拉選單
+                response.data.uniqueClasses.forEach(className => {
+                    const option = document.createElement('option');
+                    option.value = className;
+                    option.textContent = className;
+                    classSelect.appendChild(option);
+                });
+
+                // 動態填充組別下拉選單
+                response.data.uniqueGroups.forEach(groupId => {
+                    const option = document.createElement('option');
+                    option.value = groupId;
+                    option.textContent = groupId;
+                    groupSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('加載班級和組別列表時發生錯誤:', error);
+            }
+        }
+
+        async function fetchUsers() {
+            const name = document.getElementById('name').value;
+            const username = document.getElementById('username').value;
+            const classFilter = document.getElementById('class').value;
+            const gradeLevel = document.getElementById('gradeLevel').value;
+            const academicYear = document.getElementById('academicYear').value;
+            const groupId = document.getElementById('groupId').value;
+
+            try {
+                const response = await axios.get('/api/accessed_users', {
+                    params: { name, username, class: classFilter, gradeLevel, academicYear, groupId }
+                });
+                displayUsers(response.data.allUsers);
+            } catch (error) {
+                console.error('查詢用戶時發生錯誤:', error);
+                document.getElementById('error').textContent = '伺服器錯誤，請稍後再試';
+            }
+        }
+
+        function displayUsers(users) {
+            const userTableBody = document.querySelector('#userTable tbody');
+            userTableBody.innerHTML = ''; // 清空表格內容
+
+            users.forEach(user => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${user.name}</td>
+                    <td>${user.class || 'N/A'}</td>
+                    <td>${user.groupId || 'N/A'}</td>
+                `;
+                userTableBody.appendChild(tr);
+            });
+        }
+
+        // 初始化時加載班級和組別列表
+        loadClassesAndGroups();
+    </script>
+</body>
+</html>

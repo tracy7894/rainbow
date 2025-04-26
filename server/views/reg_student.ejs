@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>學生註冊</title>
+    <style>
+        body {
+            font-size: 30px;
+        }
+        #message {
+            color: green;
+            font-size: 24px;
+            margin-top: 20px;
+        }
+        #error {
+            color: red;
+            font-size: 24px;
+            margin-top: 20px;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <h1>註冊學生帳號</h1>
+    <form id="registrationForm">
+        <div>
+            <label for="name">姓名:</label><br>
+            <input name="name" type="text" id="name" required>
+        </div>
+        <div>
+            <label for="class">班級:</label><br>
+            <input name="class" type="text" id="class" required>
+        </div>
+        <div>
+            <label for="username">帳號:</label><br>
+            <input name="username" type="text" id="username" required>
+        </div>
+        <div>
+            <label for="password">密碼:</label><br>
+            <input name="password" type="password" id="password" required>
+        </div>
+        <div>
+            <label for="academicYear">學年:</label><br>
+            <select id="academicYear" name="academicYear" required>
+                <option value="四技">四技</option>
+                <option value="二技">二技</option>
+                <option value="研究組">研究組</option>
+            </select>
+        </div>
+        <div>
+            <label for="gradeLevel">年級:</label><br>
+            <select id="gradeLevel" name="gradeLevel" required>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+            </select>
+        </div>
+        <button type="submit">註冊</button>
+    </form>
+    <div id="message"></div>
+    <div id="error"></div>
+
+    <script>
+        document.getElementById('registrationForm').onsubmit = async function(event) {
+            event.preventDefault(); // 防止表單提交刷新頁面
+            
+            const name = document.getElementById('name').value;
+            const className = document.getElementById('class').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const academicYear = document.getElementById('academicYear').value;
+            const gradeLevel = document.getElementById('gradeLevel').value;
+            const messageDiv = document.getElementById('message');
+            const errorDiv = document.getElementById('error');
+
+            try {
+                const response = await axios.post('/api/reg_student', {
+                    name,
+                    class: className,
+                    username,
+                    password,
+                    academicYear,
+                    gradeLevel
+                });
+                
+                // 清空錯誤訊息
+                errorDiv.textContent = '';
+                
+                // 如果註冊成功，顯示成功消息並跳轉
+                if (response.data.success) {
+                    messageDiv.textContent = response.data.message;
+                    setTimeout(() => {
+                        window.location.href = response.data.redirectUrl;
+                    }, 500); 
+                } else {
+                    messageDiv.textContent = '';
+                    errorDiv.textContent = '註冊失敗';
+                }
+            } catch (error) {
+                messageDiv.textContent = '';
+                errorDiv.textContent = '註冊失敗: ' + (error.response ? error.response.data.message : '伺服器錯誤');
+                console.error('Error during registration:', error);
+            }
+        };
+    </script>
+</body>
+</html>
