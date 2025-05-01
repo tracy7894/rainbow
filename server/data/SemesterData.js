@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 let SemesterDataSchema = new mongoose.Schema({
-    name: { type: String,unique: true },  // 學期名稱（自動生成）
+    name: { type: String,unique: true },  // 學期名稱（自動生成） 自動生成不能required會error!
     //startDate: { type: Date, required: true }, // 開始日期
    // endDate: { type: Date, required: true },   // 結束日期
     semesterType: { type: String, enum: ["half", "full"], required: true } // "half" = 上下學期, "full" = 全年制

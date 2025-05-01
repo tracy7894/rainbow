@@ -4,7 +4,7 @@ const SemesterData = require('./SemesterData');
 const CourseDataSchema = new mongoose.Schema({
     courseName: { type: String, required: true },
    semester: { type: mongoose.Schema.Types.ObjectId, ref: 'SemesterData', required: true },//傳semester._id!
-   // groups: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Group' }], // 課程中的小組 change?
+   // groups: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Group' }], // 改成group ref Course?
 
     createdAt: { type: Date, default: Date.now }
 });
