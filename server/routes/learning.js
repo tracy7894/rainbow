@@ -4,6 +4,7 @@ const router = express.Router();
 const mongoose = require('mongoose');
 
 // 引入資料模型
+const SemesterData = require('../data/SemesterData');
 const CourseData = require('../data/CourseData');
 const ThemeData = require('../data/ThemeData');
 const DocumentData = require('../data/DocumentData');
@@ -13,13 +14,46 @@ const StudentUserModel = require('../data/StudentUser');
 
 /**
  * 1️⃣ 新增課程
- * 接收課程資料，新增到資料庫
+ * 接收課程資料，新
+ * 增到資料庫
  */
+// 引入模型
+
+
+// 新增學期
+router.post('/semester', async (req, res) => {
+    try {
+        const newSemester = new SemesterData(req.body);
+        await newSemester.save();
+        res.status(201).json(newSemester);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
 router.post('/course', async (req, res) => {
     try {
         const course = new CourseData(req.body);
         await course.save();
         res.status(201).json(course);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+// 修改課程
+router.put('/course/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updatedCourse = await CourseData.findByIdAndUpdate(id, req.body, {
+            new: true,
+            runValidators: true
+        });
+
+        if (!updatedCourse) {
+            return res.status(404).json({ error: 'Course not found' });
+        }
+
+        res.json(updatedCourse);
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
@@ -59,6 +93,24 @@ router.post('/theme', async (req, res) => {
         res.status(400).json({ error: err.message });
     }
 });
+// 修改主題
+router.put('/theme/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updatedTheme = await ThemeData.findByIdAndUpdate(id, req.body, {
+            new: true,
+            runValidators: true
+        });
+
+        if (!updatedTheme) {
+            return res.status(404).json({ error: 'Theme not found' });
+        }
+
+        res.json(updatedTheme);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
 
 /**
  * 5️⃣ 查詢所有主題
@@ -90,6 +142,24 @@ router.get('/document', async (req, res) => {
     const docs = await DocumentData.find();
     console.log('查詢所有單元成功');
     res.json(docs);
+});
+// 修改單元（Document）
+router.put('/document/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updatedDoc = await DocumentData.findByIdAndUpdate(id, req.body, {
+            new: true, // 回傳更新後的文件
+            runValidators: true // 套用模型驗證
+        });
+
+        if (!updatedDoc) {
+            return res.status(404).json({ error: 'Document not found' });
+        }
+
+        res.json(updatedDoc);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
 });
 
 /**

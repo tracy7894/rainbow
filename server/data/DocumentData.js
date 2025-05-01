@@ -14,7 +14,7 @@ const DocumentDataSchema  = new mongoose.Schema({
     video: { type: String, default: null }, // 內嵌影片路徑？ (待研究)
     reference: { type: String, default: null }, //參考連結 影片連結？
     word: { type: String, default: null }, // 單詞區塊
-    //semester: { type: mongoose.Schema.Types.ObjectId, ref: 'SemesterData' }, //所屬學期
+
     theme: { type: mongoose.Schema.Types.ObjectId, ref: 'ThemeData', required: true }, // 所屬主題
     course: { type: mongoose.Schema.Types.ObjectId, ref: 'CourseData', required: true }, // 所屬課程
     content: [TextSegmentSchema], // 一般教材文字敘述

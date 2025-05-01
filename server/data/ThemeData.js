@@ -5,7 +5,6 @@ const ThemeDataSchema = new mongoose.Schema({
     themeName: { type: String, required: true }, // 主題名稱
     course: { type: mongoose.Schema.Types.ObjectId, ref: 'CourseData', required: true }, // 所屬課程
     createdAt: { type: Date, default: Date.now },
-   // semester: { type: mongoose.Schema.Types.ObjectId, ref: 'SemesterData', required: true },
 });
 
 // 避免同一門課重複加入相同的主題
