@@ -11,7 +11,8 @@ const DocumentData = require('../data/DocumentData');
 const LearningProgress = require('../data/LearningProgress');
 const ProfiloData = require('../data/ProfiloData');
 const StudentUserModel = require('../data/StudentUser');
-
+const QuizData = require('../data/QuizDate')
+const StudentQuizScore = require('../data/StudentQuizScore')
 /**
  * 1️⃣ 新增課程
  * 接收課程資料，新
@@ -420,4 +421,122 @@ router.post('/update-completion', async (req, res) => {
     }
 });
 
+
+//新增quizData(問卷or測驗)
+router.post('/quiz', async (req, res) => {
+    try {
+        const newQuiz = new QuizData(req.body);
+        await newQuiz.save();
+        res.status(201).json(newQuiz);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+//  取得單一 Quiz by ID
+router.get('/quiz/:id', async (req, res) => {
+    try {
+        const quiz = await QuizData.findById(req.params.id).populate('theme course');
+        if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
+        res.json(quiz);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+// 取得全部 Quiz 
+router.get('/quizzes', async (req, res) => {
+    try {
+        const quizzes = await QuizData.find().populate("theme course");
+        res.json(quizzes);
+    } catch (error) {
+        res.status(500).json({ error: "無法取得測驗資料" });
+    }
+});
+// 刪除Quiz
+router.delete('/quiz/:id', async (req, res) => {
+    try {
+        await QuizData.findByIdAndDelete(req.params.id);
+        res.json({ message: "刪除成功" });
+    } catch (error) {
+        res.status(500).json({ error: "刪除失敗" });
+    }
+});
+
+// 修改 Quiz
+router.put('/quiz/:id', async (req, res) => {
+    try {
+        const updated = await QuizData.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!updated) return res.status(404).json({ error: 'Quiz not found' });
+        res.json(updated);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// 學生提交測驗 + 自動批改
+router.post('/quiz/submit', async (req, res) => {
+    try {
+        const { student, quizId, answers } = req.body;
+        const quiz = await QuizData.findById(quizId);
+
+        if (!quiz || quiz.type !== 1) {
+            return res.status(400).json({ error: '測驗不存在或非測驗類型' });
+        }
+
+        // 自動批改
+        let score = 0;
+        quiz.questions.forEach((q, i) => {
+            if (q.correctAnswer !== null && answers[i] === q.correctAnswer) {
+                score++;
+            }
+        });
+
+        const result = new StudentQuizScore({ student, quizId, answers, score });
+        await result.save();
+        res.status(201).json(result);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+//  查學生 Quiz 成績
+router.get('/quiz-score/:studentId', async (req, res) => {
+    try {
+        const scores = await StudentQuizScore.find({ student: req.params.studentId }).populate('quizId');
+        res.json(scores);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+//  修改學生成績（如需調整）
+router.put('/quiz-score/:id', async (req, res) => {
+    try {
+        const updated = await StudentQuizScore.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!updated) return res.status(404).json({ error: '成績不存在' });
+        res.json(updated);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// 可以隱藏答案for student  如果有需要
+router.get('/quiz/:id/for-student', async (req, res) => {
+    try {
+      const quiz = await QuizData.findById(req.params.id).lean(); // 使用 lean() 方便修改物件
+      if (!quiz) return res.status(404).json({ error: "找不到此測驗" });
+  
+      // 移除正確答案
+      quiz.questions = quiz.questions.map(q => {
+        const { correctAnswer, ...rest } = q;//只傳回正確答案外的資料
+        return rest;
+      });
+  
+      res.json(quiz);
+    } catch (error) {
+      res.status(500).json({ error: "獲取測驗失敗" });
+    }
+  });
+  
+router.post()
 module.exports = router;

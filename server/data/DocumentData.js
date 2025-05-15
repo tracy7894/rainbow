@@ -9,7 +9,7 @@ const TextSegmentSchema = new mongoose.Schema({
 
 //
 const DocumentDataSchema  = new mongoose.Schema({
-    title: { type: String, required: true }, 
+    title: { type: String, required: true }, //情境案例獨立？
     contentType: { type: Number,enum: [0, 1, 2, 3, 4, 5], required: true }, // 0:一般教材 1:單詞 //2:影片 (暫定) 3:重點介紹 4:學習目標 5:情境案例 (不同輸入格式)
     video: { type: String, default: null }, // 內嵌影片路徑？ (待研究)
     reference: { type: String, default: null }, //參考連結 影片連結？
