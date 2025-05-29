@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const DiscussionSchema = new mongoose.Schema({
-    // 多型參照，user 可是 Student / ExternalUser / AdminUserData
+    // 多型參照，user 為 Student / ExternalUser / AdminUserData
     user: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,

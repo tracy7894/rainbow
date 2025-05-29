@@ -365,6 +365,15 @@ router.post('/progress', async (req, res) => {
         if (!studentId || !studentModel || !itemId || !itemModel) {
             return res.status(400).json({ error: "缺少必要欄位：studentId, studentModel, itemId, itemModel" });
         }
+        const StudentModel = mongoose.model(studentModel);
+        const ItemModel = mongoose.model(itemModel);
+
+        const studentExists = await StudentModel.exists({ _id: studentId });
+        const itemExists = await ItemModel.exists({ _id: itemId });
+
+        if (!studentExists || !itemExists) {
+            return res.status(400).json({ error: "指定的學生或教材不存在" });
+        }
 
         // 查詢是否已經有進度紀錄
         let progress = await LearningProgress.findOne({
