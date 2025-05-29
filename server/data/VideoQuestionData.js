@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
-//
+//廢案
 
-const VideoQuestionSchema = new mongoose.Schema({
+const VideoQuestionSchema = new mongoose.Schema({//影片問題   改成yt
   videoname: {
     type: String,
     required: true,

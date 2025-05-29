@@ -1,5 +1,5 @@
 const mongoose = require('mongoose')
-
+//要討論區 不分組
 let ExternalUser = new mongoose.Schema({
     username: { type: String, required: true },
     password: { type: String, required: true },

@@ -3,7 +3,6 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 
-// 引入資料模型
 const SemesterData = require('../data/SemesterData');
 const CourseData = require('../data/CourseData');
 const ThemeData = require('../data/ThemeData');
@@ -11,14 +10,19 @@ const DocumentData = require('../data/DocumentData');
 const LearningProgress = require('../data/LearningProgress');
 const ProfiloData = require('../data/ProfiloData');
 const StudentUserModel = require('../data/StudentUser');
-const QuizData = require('../data/QuizDate')
+const QuizData = require('../data/QuizData')
 const StudentQuizScore = require('../data/StudentQuizScore')
+const WordData = require("../data/WordData")
+const ScenarioData = require("../data/ScenarioData")
 /**
- * 1️⃣ 新增課程
- * 接收課程資料，新
- * 增到資料庫
+todo 
+防止重複提交api
+判斷繳交期限
+3mode 
+quiz完成度？
+作答記錄（截止日後公佈
  */
-// 引入模型
+
 
 
 // 新增學期
@@ -31,7 +35,7 @@ router.post('/semester', async (req, res) => {
         res.status(400).json({ error: err.message });
     }
 });
-
+//新增課程
 router.post('/course', async (req, res) => {
     try {
         const course = new CourseData(req.body);
@@ -61,7 +65,7 @@ router.put('/course/:id', async (req, res) => {
 });
 
 /**
- * 2️⃣ 查詢所有課程
+ * 查詢所有課程
  */
 router.get('/course', async (req, res) => {
     const courses = await CourseData.find();
@@ -69,7 +73,7 @@ router.get('/course', async (req, res) => {
 });
 
 /**
- * 3️⃣ 查詢單一課程細節
+ * 查詢單一課程細節
  * 包含此課程的所有主題及每個主題底下的單元
  */
 router.get('/course/:id', async (req, res) => {
@@ -82,8 +86,7 @@ router.get('/course/:id', async (req, res) => {
 });
 
 /**
- * 4️⃣ 新增主題
- * 接收主題資料，新增到資料庫
+ * 新增主題
  */
 router.post('/theme', async (req, res) => {
     try {
@@ -114,15 +117,40 @@ router.put('/theme/:id', async (req, res) => {
 });
 
 /**
- * 5️⃣ 查詢所有主題
+ *  查詢所有主題
  */
 router.get('/theme', async (req, res) => {
     const themes = await ThemeData.find();
     res.json(themes);
 });
+//修改 重點介紹, 學習目標
+router.patch('/theme/:id/focus', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { focus } = req.body;
+
+        if (!Array.isArray(focus) || focus.length !== 2) {
+            return res.status(400).json({ message: 'focus 必須是包含兩個字串的陣列（[重點介紹, 學習目標]）' });
+        }
+
+        const theme = await ThemeData.findByIdAndUpdate(
+            id,
+            { focus },
+            { new: true, runValidators: true }
+        );
+
+        if (!theme) {
+            return res.status(404).json({ message: '找不到對應主題' });
+        }
+
+        res.json({ message: '更新成功', theme });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
 /**
- * 6️⃣ 新增單元 (Document)
+ * 新增單元 (Document)
  * 接收單元資料，新增到資料庫
  */
 router.post('/document', async (req, res) => {
@@ -135,15 +163,50 @@ router.post('/document', async (req, res) => {
         res.status(400).json({ error: err.message });
     }
 });
-
+//新增單字
+router.post('/Word', async (req, res) => {
+    console.log('收到 POST /Word 請求');
+    try {
+        const Word = new WordData(req.body);
+        await Word.save();
+        res.status(201).json(Word);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+})
+//新增情境案例
+router.post('/Scenario', async (req, res) => {
+    console.log('收到 POST /Scenario 請求');
+    try {
+        const Scenario = new ScenarioData(req.body);
+        await Scenario.save();
+        res.status(201).json(Scenario);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+})
 /**
- * 7️⃣ 查詢所有單元
+ * 查詢所有單元
  */
 router.get('/document', async (req, res) => {
     const docs = await DocumentData.find();
     console.log('查詢所有單元成功');
     res.json(docs);
 });
+//查詢所有單字
+router.get('/Word', async (req, res) => {
+    const words = await WordData.find();
+    console.log('查詢所有單字成功');
+    res.json(words);
+})
+//查詢所有情境案例
+router.get('/Scenario', async (req, res) => {
+    const Scenarios = await ScenarioData.find();
+    console.log('查詢所有情應案例成功');
+    res.json(Scenarios);
+})
+
+
 // 修改單元（Document）
 router.put('/document/:id', async (req, res) => {
     try {
@@ -162,9 +225,44 @@ router.put('/document/:id', async (req, res) => {
         res.status(400).json({ error: err.message });
     }
 });
+//修改單字
+router.put('/Word/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updatedWord = await WordData.findByIdAndUpdate(id, req.body, {
+            new: true, // 回傳更新後的文件
+            runValidators: true // 套用模型驗證
+        });
 
+        if (!updatedWord) {
+            return res.status(404).json({ error: 'Word not found' });
+        }
+
+        res.json(updatedWord);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+//修改情境案例
+router.put('/Scenario/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updatedScenario = await ScenarioData.findByIdAndUpdate(id, req.body, {
+            new: true, // 回傳更新後的文件
+            runValidators: true // 套用模型驗證
+        });
+
+        if (!updatedScenario) {
+            return res.status(404).json({ error: 'Scenario not found' });
+        }
+
+        res.json(updatedScenario);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
 /**
- * 7️⃣-2️⃣ 查詢單一單元
+ * 查詢單一單元
  * 根據單元 ID 查詢單一教材資料
  */
 router.get('/document/:id', async (req, res) => {
@@ -182,22 +280,107 @@ router.get('/document/:id', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+//查詢單一單字
+router.get('/Word/:id', async (req, res) => {
+    try {
+        const wordId = req.params.id;
+        console.log(wordId);
+        const word = await WordData.findOne({ _id: wordId });
+        console.log(word);
+        if (!word) {
+            return res.status(404).json({ error: 'Word not found' });
+        }
+        res.json(word);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+//查詢單一情境案例
+router.get('/Scenario/:id', async (req, res) => {
+    try {
+        const scenarioId = req.params.id;
+        console.log(scenarioId);
+        const scenario = await ScenarioData.findOne({ _id: scenarioId });
+        console.log(scenario);
+        if (!scenario) {
+            return res.status(404).json({ error: 'Scenario not found' });
+        }
+        res.json(scenario);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+//刪除單元
+router.delete('/document/:id', async (req, res) => {
+    try {
+        const result = await DocumentData.findByIdAndDelete(req.params.id);
+        if (!result) {
+            return res.status(404).json({ message: '找不到該document' });
+        }
+        res.json({ message: 'document已刪除', data: result });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+//刪除單字
+const WordData = require('../models/WordData');
+
+router.delete('/word/:id', async (req, res) => {
+    try {
+        const result = await WordData.findByIdAndDelete(req.params.id);
+        if (!result) {
+            return res.status(404).json({ message: '找不到該word' });
+        }
+        res.json({ message: 'word已刪除', data: result });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+//刪除情境案例
+router.delete('/scenario/:id', async (req, res) => {
+    try {
+        const result = await ScenarioData.findByIdAndDelete(req.params.id);
+        if (!result) {
+            return res.status(404).json({ message: '找不到該scenario' });
+        }
+        res.json({ message: 'scenario已刪除', data: result });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 
 /**
- * 8️⃣ 新增學生學習進度
+ *新增學生學習進度
  * - 若已有記錄則更新為已完成
  * - 若沒有記錄則新增
  */
+////自動判斷學生&教材類型
 router.post('/progress', async (req, res) => {
     try {
-        const { studentId, documentId } = req.body;
-        let progress = await LearningProgress.findOne({ student: studentId, DocumentData: documentId });
+        const { studentId, studentModel, itemId, itemModel } = req.body;
+
+        if (!studentId || !studentModel || !itemId || !itemModel) {
+            return res.status(400).json({ error: "缺少必要欄位：studentId, studentModel, itemId, itemModel" });
+        }
+
+        // 查詢是否已經有進度紀錄
+        let progress = await LearningProgress.findOne({
+            student: studentId,
+            studentModel,
+            item: itemId,
+            itemModel
+        });
 
         if (!progress) {
             // 沒有找到進度則新增
             progress = new LearningProgress({
                 student: studentId,
-                DocumentData: documentId,
+                studentModel,
+                item: itemId,
+                itemModel,
                 completed: true,
                 completedAt: new Date()
             });
@@ -214,29 +397,40 @@ router.post('/progress', async (req, res) => {
     }
 });
 
+
 /**
- * 9️⃣ 查詢學生完成進度
+ * 查詢學生完成進度
  * 查詢學生已完成的單元，包含單元細節
  */
-router.get('/progress/:studentId', async (req, res) => {
+//自動判斷學生類型
+router.get('/progress/:studentModel/:studentId', async (req, res) => {
+    const { studentModel, studentId } = req.params;
     try {
-        const result = await LearningProgress.find({ student: req.params.studentId }).populate('DocumentData');
+        const result = await LearningProgress.find({
+            student: studentId,
+            studentModel
+        }).populate('student').populate('item');
+
         res.json(result);
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 });
 
+
 /**
- * 🔟 檢查單一教材是否完成
+ * 檢查單一教材是否完成
  */
-router.get('/progress/:studentId/:documentId', async (req, res) => {
+//自動判斷學生&教材類型
+router.get('/progress/:studentModel/:studentId/:itemModel/:itemId', async (req, res) => {
+    const { studentModel, studentId, itemModel, itemId } = req.params;
     try {
-        const { studentId, documentId } = req.params;
         const progress = await LearningProgress.findOne({
             student: studentId,
-            DocumentData: documentId
-        }).populate('DocumentData');
+            studentModel,
+            item: itemId,
+            itemModel
+        }).populate('student').populate('item');
 
         if (!progress) {
             return res.status(404).json({ message: 'No progress record found' });
@@ -244,7 +438,7 @@ router.get('/progress/:studentId/:documentId', async (req, res) => {
 
         res.json({
             studentId,
-            documentId,
+            itemId,
             completed: progress.completed,
             completedAt: progress.completedAt
         });
@@ -253,8 +447,9 @@ router.get('/progress/:studentId/:documentId', async (req, res) => {
     }
 });
 
+
 /**
- * 1️⃣1️⃣ 查詢：
+ * 查詢：
  * - 基本資料
  * - 學習進度
  * - 主題完成率、課程完成率、bonus
@@ -300,7 +495,7 @@ router.get('/student/:studentId/status', async (req, res) => {
 });
 
 /**
- * 1️⃣2️⃣ 更新 ProfiloData 的完成度
+ * 更新 ProfiloData 的完成度
  * 依據學生已完成的單元，重新計算：
  * - 每個主題的完成率
  * - 整體課程完成率
@@ -422,7 +617,7 @@ router.post('/update-completion', async (req, res) => {
 });
 
 
-//新增quizData(問卷or測驗)
+//新增quizData(問卷or測驗) 
 router.post('/quiz', async (req, res) => {
     try {
         const newQuiz = new QuizData(req.body);
@@ -452,15 +647,15 @@ router.get('/quizzes', async (req, res) => {
         res.status(500).json({ error: "無法取得測驗資料" });
     }
 });
-// 刪除Quiz
-router.delete('/quiz/:id', async (req, res) => {
-    try {
-        await QuizData.findByIdAndDelete(req.params.id);
-        res.json({ message: "刪除成功" });
-    } catch (error) {
-        res.status(500).json({ error: "刪除失敗" });
-    }
-});
+// 刪除Quiz 
+// router.delete('/quiz/:id', async (req, res) => {
+//     try {
+//         await QuizData.findByIdAndDelete(req.params.id);
+//         res.json({ message: "刪除成功" });
+//     } catch (error) {
+//         res.status(500).json({ error: "刪除失敗" });
+//     }
+// });
 
 // 修改 Quiz
 router.put('/quiz/:id', async (req, res) => {
@@ -523,20 +718,20 @@ router.put('/quiz-score/:id', async (req, res) => {
 // 可以隱藏答案for student  如果有需要
 router.get('/quiz/:id/for-student', async (req, res) => {
     try {
-      const quiz = await QuizData.findById(req.params.id).lean(); // 使用 lean() 方便修改物件
-      if (!quiz) return res.status(404).json({ error: "找不到此測驗" });
-  
-      // 移除正確答案
-      quiz.questions = quiz.questions.map(q => {
-        const { correctAnswer, ...rest } = q;//只傳回正確答案外的資料
-        return rest;
-      });
-  
-      res.json(quiz);
+        const quiz = await QuizData.findById(req.params.id).lean(); // 使用 lean() 方便修改物件
+        if (!quiz) return res.status(404).json({ error: "找不到此測驗" });
+
+        // 移除正確答案
+        quiz.questions = quiz.questions.map(q => {
+            const { correctAnswer, ...rest } = q;//只傳回正確答案外的資料
+            return rest;
+        });
+
+        res.json(quiz);
     } catch (error) {
-      res.status(500).json({ error: "獲取測驗失敗" });
+        res.status(500).json({ error: "獲取測驗失敗" });
     }
-  });
-  
+});
+
 router.post()
 module.exports = router;
