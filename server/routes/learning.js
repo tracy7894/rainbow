@@ -325,7 +325,7 @@ router.delete('/document/:id', async (req, res) => {
     }
 });
 //刪除單字
-const WordData = require('../models/WordData');
+
 
 router.delete('/word/:id', async (req, res) => {
     try {
@@ -733,5 +733,5 @@ router.get('/quiz/:id/for-student', async (req, res) => {
     }
 });
 
-router.post()
+
 module.exports = router;

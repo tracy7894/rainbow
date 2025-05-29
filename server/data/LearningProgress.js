@@ -24,6 +24,6 @@ let LearningProgressSchema = new mongoose.Schema({
     completed: { type: Boolean, default: false },
     completedAt: { type: Date, default: null }
 });
-
+LearningProgressSchema.index({ studentId: 1, documentId: 1 }, { unique: true });//設定唯一
 module.exports = mongoose.model("LearningProgress", LearningProgressSchema);
 

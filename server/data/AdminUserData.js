@@ -10,4 +10,4 @@ let AdminUserData = new mongoose.Schema({
 
 
 let AdminUserDataModel = mongoose.model('AdminUserDataModel', AdminUserDataModel)
-module.exports = AdminUserDataModelModel
+module.exports = AdminUserDataModel
