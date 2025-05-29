@@ -1,5 +1,5 @@
 const mongoose = require('mongoose')
-
+//管理者
 let AdminUserData = new mongoose.Schema({
     username: { type: String, required: true },
     password: { type: String, required: true },
@@ -9,5 +9,5 @@ let AdminUserData = new mongoose.Schema({
 })
 
 
-let AdminUserDataModel = mongoose.model('AdminUserDataModel', AdminUserDataModel)
+let AdminUserDataModel = mongoose.model('AdminUserData', AdminUserDataModel)
 module.exports = AdminUserDataModel

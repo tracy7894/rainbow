@@ -1,10 +1,9 @@
 const mongoose = require('mongoose');
 const SemesterData = require('./SemesterData');
-//複製課程功能
+//課程
 const CourseDataSchema = new mongoose.Schema({
     courseName: { type: String, required: true },
-    semester: { type: mongoose.Schema.Types.ObjectId, ref: 'SemesterData', required: true },//傳semester._id!
-    groups: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Group' }], // 改成group ref Course?
+    semester: { type: mongoose.Schema.Types.ObjectId, ref: 'SemesterData', required: true },//
 
     createdAt: { type: Date, default: Date.now }
 });
