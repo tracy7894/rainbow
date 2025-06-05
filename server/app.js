@@ -6,6 +6,10 @@ var logger = require('morgan');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
+//課程相關api
+const courseRoutes = require('./routes/courseRoutes');
+
+
 var learningRoutes=require('./routes/learning')
 var app = express();
 const session=require('express-session')
@@ -40,7 +44,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/api/learning', learningRoutes);
-
+app.use('/api', courseRoutes);
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));

@@ -1,8 +1,8 @@
 const mongoose = require('mongoose')
 const Schema = mongoose.Schema;
-
+//分組聊天室訊息
 MessageDataSchema = new Schema({
-    username: { type: String, required: true },
+    user: [{ type: mongoose.Schema.Types.ObjectId, ref: 'StudentUser' }],
     message: { type: String, default: null },
     image: { type: String, default: null }, 
     groupId: { type: mongoose.Schema.Types.ObjectId, ref: 'Group', required: true }, 

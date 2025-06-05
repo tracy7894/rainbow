@@ -35,55 +35,6 @@ router.post('/semester', async (req, res) => {
         res.status(400).json({ error: err.message });
     }
 });
-//新增課程
-router.post('/course', async (req, res) => {
-    try {
-        const course = new CourseData(req.body);
-        await course.save();
-        res.status(201).json(course);
-    } catch (err) {
-        res.status(400).json({ error: err.message });
-    }
-});
-// 修改課程
-router.put('/course/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const updatedCourse = await CourseData.findByIdAndUpdate(id, req.body, {
-            new: true,
-            runValidators: true
-        });
-
-        if (!updatedCourse) {
-            return res.status(404).json({ error: 'Course not found' });
-        }
-
-        res.json(updatedCourse);
-    } catch (err) {
-        res.status(400).json({ error: err.message });
-    }
-});
-
-/**
- * 查詢所有課程
- */
-router.get('/course', async (req, res) => {
-    const courses = await CourseData.find();
-    res.json(courses);
-});
-
-/**
- * 查詢單一課程細節
- * 包含此課程的所有主題及每個主題底下的單元
- */
-router.get('/course/:id', async (req, res) => {
-    const course = await CourseData.findById(req.params.id)
-        .populate({
-            path: 'themes',
-            populate: { path: 'documents' }
-        });
-    res.json(course);
-});
 
 /**
  * 新增主題

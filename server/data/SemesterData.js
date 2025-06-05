@@ -27,6 +27,16 @@ SemesterDataSchema.pre("save", function (next) {
     }
     next();
 });
-
+SemesterDataSchema.statics.getCurrentSemester = async function () {
+    const currentDate = new Date();
+    const semester = await this.findOne({
+        startDate: { $lte: currentDate },
+        endDate: { $gte: currentDate },
+    });
+    if (!semester) {
+        throw new Error('No active semester found for the current date');
+    }
+    return semester;
+};
 let SemesterDataModel = mongoose.model('SemesterData', SemesterDataSchema);
 module.exports = SemesterDataModel;

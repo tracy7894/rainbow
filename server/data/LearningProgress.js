@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-
+//學習進度管理
 let LearningProgressSchema = new mongoose.Schema({
     student: {
         type: mongoose.Schema.Types.ObjectId,

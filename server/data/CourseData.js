@@ -11,6 +11,7 @@ const CourseDataSchema = new mongoose.Schema({
 CourseDataSchema.pre('save', async function (next) {
     if (!this.semester) {
         this.semester = (await SemesterData.getCurrentSemester())._id;
+        
     }
     next();
 });

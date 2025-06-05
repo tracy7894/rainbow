@@ -1,7 +1,5 @@
 const mongoose = require('mongoose');
-//目前測驗＋問卷使用 只有編輯 無新增/刪除
-//總共5測驗/問卷
-//問卷用完成度有100% 無0%
+
 const QuestionSchema = new mongoose.Schema({//題目
     questionText: { type: String, required: true },
 
