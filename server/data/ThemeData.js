@@ -4,7 +4,8 @@ const ThemeDataSchema = new mongoose.Schema({//主題
     themeNumber: { type: Number, required: true, enum: [1, 2, 3, 4, 5, 6] }, // 固定六大主題
     themeName: { type: String, required: true }, // 主題名稱
     course: { type: mongoose.Schema.Types.ObjectId, ref: 'CourseData', required: true }, // 所屬課程
-    focus: [{ type: String, require: true ,default:null}],//第1個：重點介紹, 第2個：學習目標   無刪除/新增 只有修改
+    focus: [{ type: String, require: true ,default:null}],//第1個：重點介紹, 第2個：學習目標 第3個：課前導讀影片 無刪除/新增 只有修改
+    //課前導讀影片
     createdAt: { type: Date, default: Date.now },
 });
 

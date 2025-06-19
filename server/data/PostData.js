@@ -1,8 +1,9 @@
-// data/DiscussionData.js
 const mongoose = require('mongoose');
 
-const DiscussionSchema = new mongoose.Schema({
-    user: {//多型參照
+const PostSchema = new mongoose.Schema({
+    title: { type: String, required: true },
+    course: { type: mongoose.Schema.Types.ObjectId, ref: 'CourseData', required: true },
+    user: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
         refPath: 'userModel'
@@ -12,12 +13,8 @@ const DiscussionSchema = new mongoose.Schema({
         required: true,
         enum: ['StudentUser', 'ExternalUser', 'AdminUserData']
     },
-
-    post: { type: mongoose.Schema.Types.ObjectId, ref: 'PostData', required: true }, // 屬於哪篇貼文的
-
     content: { type: String, required: true },
-
     createdAt: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('DiscussionData', DiscussionSchema);
+module.exports = mongoose.model('PostData', PostSchema);

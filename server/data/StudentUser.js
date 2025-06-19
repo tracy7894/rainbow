@@ -7,7 +7,7 @@ let StudentUser = new mongoose.Schema({
     groupId: { type: mongoose.Schema.Types.ObjectId, ref: 'Group', default: null }, // 關聯 Group
     class: { type: String },//班級
     academicYear: { type: String, required: true }, // 學年  計畫人員 四技 二技
-    gradeLevel: { type: String, required: true },  // 年級
+    gradeLevel: { type: String},  // 年級
     groupRole: { type: Number, default: 0 }, // 0:普通成員 1:組長
     identity: { type: Number, default: 0, required: true }, //權限 0:未認證 1:學生 2:旁觀 
     access: { type: Boolean, default: false, required: true },//認證
