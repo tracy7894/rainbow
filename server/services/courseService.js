@@ -1,4 +1,4 @@
-const CourseData = require('../data/CourseData');
+const CourseData = require('../models/CourseData');
 
 exports.createCourse = async (data) => {
     const course = new CourseData(data);

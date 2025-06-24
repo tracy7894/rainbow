@@ -1,4 +1,3 @@
-// data/DiscussionData.js
 const mongoose = require('mongoose');
 
 const DiscussionSchema = new mongoose.Schema({

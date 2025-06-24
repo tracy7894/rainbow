@@ -1,32 +1,30 @@
-const DiscussionData = require('../data/DiscussionData');
+const DiscussionData = require('../models/DiscussionData');
 
 exports.createDiscussion = async (data) => {
     const discussion = new DiscussionData(data);
     return await discussion.save();
 };
 
-exports.updateDiscussion = async (id, user, newContent) => {
+exports.updateDiscussion = async (id, { userId, userModel, content }) => {
     const discussion = await DiscussionData.findById(id);
     if (!discussion) return null;
 
-    if (!discussion.user.equals(user._id) || discussion.userModel !== user.modelName) {
-        return null; // 使用者不是留言的本人
+    if (!discussion.user.equals(userId) || discussion.userModel !== userModel) {
+        return null;
     }
 
-    discussion.content = newContent;
+    discussion.content = content;
     return await discussion.save();
 };
 
 exports.deleteDiscussion = async (id) => {
-    const result = await DiscussionData.findByIdAndDelete(id);
-    return result;
+    return await DiscussionData.findByIdAndDelete(id);
 };
 
 exports.getAllDiscussions = async () => {
-    return await DiscussionData.find().populate('user').populate('course');
+    return await DiscussionData.find().populate('user')
 };
 
 exports.getDiscussionById = async (id) => {
-    return await DiscussionData.findById(id).populate('user').populate('course');
+    return await DiscussionData.findById(id).populate('user')
 };
-

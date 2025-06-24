@@ -3,17 +3,17 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 
-const SemesterData = require('../data/SemesterData');
-const CourseData = require('../data/CourseData');
-const ThemeData = require('../data/ThemeData');
-const DocumentData = require('../data/DocumentData');
-const LearningProgress = require('../data/LearningProgress');
-const ProfiloData = require('../data/ProfiloData');
-const StudentUserModel = require('../data/StudentUser');
-const QuizData = require('../data/QuizData')
-const StudentQuizScore = require('../data/StudentQuizScore')
-const WordData = require("../data/WordData")
-const ScenarioData = require("../data/ScenarioData")
+const SemesterData = require('../models/SemesterData');
+const CourseData = require('../models/CourseData');
+const ThemeData = require('../models/ThemeData');
+const DocumentData = require('../models/DocumentData');
+const LearningProgress = require('../models/LearningProgress');
+const ProfiloData = require('../models/ProfiloData');
+const StudentUserModel = require('../models/StudentUser');
+const QuizData = require('../models/QuizData')
+const StudentQuizScore = require('../models/StudentQuizScore')
+const WordData = require("../models/WordData")
+const ScenarioData = require("../models/ScenarioData")
 /**
 todo 
 防止重複提交api
@@ -26,217 +26,217 @@ quiz完成度？
 
 
 // 新增學期
-router.post('/semester', async (req, res) => {
-    try {
-        const newSemester = new SemesterData(req.body);
-        await newSemester.save();
-        res.status(201).json(newSemester);
-    } catch (err) {
-        res.status(400).json({ error: err.message });
-    }
-});
+// router.post('/semester', async (req, res) => {
+//     try {
+//         const newSemester = new SemesterData(req.body);
+//         await newSemester.save();
+//         res.status(201).json(newSemester);
+//     } catch (err) {
+//         res.status(400).json({ error: err.message });
+//     }
+// });
 
-/**
- * 新增單元 (Document)
- * 接收單元資料，新增到資料庫
- */
-router.post('/document', async (req, res) => {
-    console.log('收到 POST /document 請求');
-    try {
-        const doc = new DocumentData(req.body);
-        await doc.save();
-        res.status(201).json(doc);
-    } catch (err) {
-        res.status(400).json({ error: err.message });
-    }
-});
-//新增單字
-router.post('/Word', async (req, res) => {
-    console.log('收到 POST /Word 請求');
-    try {
-        const Word = new WordData(req.body);
-        await Word.save();
-        res.status(201).json(Word);
-    } catch (err) {
-        res.status(400).json({ error: err.message });
-    }
-})
-//新增情境案例
-router.post('/Scenario', async (req, res) => {
-    console.log('收到 POST /Scenario 請求');
-    try {
-        const Scenario = new ScenarioData(req.body);
-        await Scenario.save();
-        res.status(201).json(Scenario);
-    } catch (err) {
-        res.status(400).json({ error: err.message });
-    }
-})
-/**
- * 查詢所有單元
- */
-router.get('/document', async (req, res) => {
-    const docs = await DocumentData.find();
-    console.log('查詢所有單元成功');
-    res.json(docs);
-});
-//查詢所有單字
-router.get('/Word', async (req, res) => {
-    const words = await WordData.find();
-    console.log('查詢所有單字成功');
-    res.json(words);
-})
-//查詢所有情境案例
-router.get('/Scenario', async (req, res) => {
-    const Scenarios = await ScenarioData.find();
-    console.log('查詢所有情應案例成功');
-    res.json(Scenarios);
-})
-
-
-// 修改單元（Document）
-router.put('/document/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const updatedDoc = await DocumentData.findByIdAndUpdate(id, req.body, {
-            new: true, // 回傳更新後的文件
-            runValidators: true // 套用模型驗證
-        });
-
-        if (!updatedDoc) {
-            return res.status(404).json({ error: 'Document not found' });
-        }
-
-        res.json(updatedDoc);
-    } catch (err) {
-        res.status(400).json({ error: err.message });
-    }
-});
-//修改單字
-router.put('/Word/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const updatedWord = await WordData.findByIdAndUpdate(id, req.body, {
-            new: true, // 回傳更新後的文件
-            runValidators: true // 套用模型驗證
-        });
-
-        if (!updatedWord) {
-            return res.status(404).json({ error: 'Word not found' });
-        }
-
-        res.json(updatedWord);
-    } catch (err) {
-        res.status(400).json({ error: err.message });
-    }
-});
-//修改情境案例
-router.put('/Scenario/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const updatedScenario = await ScenarioData.findByIdAndUpdate(id, req.body, {
-            new: true, // 回傳更新後的文件
-            runValidators: true // 套用模型驗證
-        });
-
-        if (!updatedScenario) {
-            return res.status(404).json({ error: 'Scenario not found' });
-        }
-
-        res.json(updatedScenario);
-    } catch (err) {
-        res.status(400).json({ error: err.message });
-    }
-});
-/**
- * 查詢單一單元
- * 根據單元 ID 查詢單一教材資料
- */
-router.get('/document/:id', async (req, res) => {
-    try {
-        const documentId = req.params.id;
-        console.log(documentId);
-        const document = await DocumentData.findOne({ _id: documentId });
-        console.log(document);
-        if (!document) {
-            return res.status(404).json({ error: 'Document not found' });
-        }
-        res.json(document);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: err.message });
-    }
-});
-//查詢單一單字
-router.get('/Word/:id', async (req, res) => {
-    try {
-        const wordId = req.params.id;
-        console.log(wordId);
-        const word = await WordData.findOne({ _id: wordId });
-        console.log(word);
-        if (!word) {
-            return res.status(404).json({ error: 'Word not found' });
-        }
-        res.json(word);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: err.message });
-    }
-});
-//查詢單一情境案例
-router.get('/Scenario/:id', async (req, res) => {
-    try {
-        const scenarioId = req.params.id;
-        console.log(scenarioId);
-        const scenario = await ScenarioData.findOne({ _id: scenarioId });
-        console.log(scenario);
-        if (!scenario) {
-            return res.status(404).json({ error: 'Scenario not found' });
-        }
-        res.json(scenario);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: err.message });
-    }
-});
-//刪除單元
-router.delete('/document/:id', async (req, res) => {
-    try {
-        const result = await DocumentData.findByIdAndDelete(req.params.id);
-        if (!result) {
-            return res.status(404).json({ message: '找不到該document' });
-        }
-        res.json({ message: 'document已刪除', data: result });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-//刪除單字
+// /**
+//  * 新增單元 (Document)
+//  * 接收單元資料，新增到資料庫
+//  */
+// router.post('/document', async (req, res) => {
+//     console.log('收到 POST /document 請求');
+//     try {
+//         const doc = new DocumentData(req.body);
+//         await doc.save();
+//         res.status(201).json(doc);
+//     } catch (err) {
+//         res.status(400).json({ error: err.message });
+//     }
+// });
+// //新增單字
+// router.post('/Word', async (req, res) => {
+//     console.log('收到 POST /Word 請求');
+//     try {
+//         const Word = new WordData(req.body);
+//         await Word.save();
+//         res.status(201).json(Word);
+//     } catch (err) {
+//         res.status(400).json({ error: err.message });
+//     }
+// })
+// //新增情境案例
+// router.post('/Scenario', async (req, res) => {
+//     console.log('收到 POST /Scenario 請求');
+//     try {
+//         const Scenario = new ScenarioData(req.body);
+//         await Scenario.save();
+//         res.status(201).json(Scenario);
+//     } catch (err) {
+//         res.status(400).json({ error: err.message });
+//     }
+// })
+// /**
+//  * 查詢所有單元
+//  */
+// router.get('/document', async (req, res) => {
+//     const docs = await DocumentData.find();
+//     console.log('查詢所有單元成功');
+//     res.json(docs);
+// });
+// //查詢所有單字
+// router.get('/Word', async (req, res) => {
+//     const words = await WordData.find();
+//     console.log('查詢所有單字成功');
+//     res.json(words);
+// })
+// //查詢所有情境案例
+// router.get('/Scenario', async (req, res) => {
+//     const Scenarios = await ScenarioData.find();
+//     console.log('查詢所有情應案例成功');
+//     res.json(Scenarios);
+// })
 
 
-router.delete('/word/:id', async (req, res) => {
-    try {
-        const result = await WordData.findByIdAndDelete(req.params.id);
-        if (!result) {
-            return res.status(404).json({ message: '找不到該word' });
-        }
-        res.json({ message: 'word已刪除', data: result });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-//刪除情境案例
-router.delete('/scenario/:id', async (req, res) => {
-    try {
-        const result = await ScenarioData.findByIdAndDelete(req.params.id);
-        if (!result) {
-            return res.status(404).json({ message: '找不到該scenario' });
-        }
-        res.json({ message: 'scenario已刪除', data: result });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
+// // 修改單元（Document）
+// router.put('/document/:id', async (req, res) => {
+//     try {
+//         const { id } = req.params;
+//         const updatedDoc = await DocumentData.findByIdAndUpdate(id, req.body, {
+//             new: true, // 回傳更新後的文件
+//             runValidators: true // 套用模型驗證
+//         });
+
+//         if (!updatedDoc) {
+//             return res.status(404).json({ error: 'Document not found' });
+//         }
+
+//         res.json(updatedDoc);
+//     } catch (err) {
+//         res.status(400).json({ error: err.message });
+//     }
+// });
+// //修改單字
+// router.put('/Word/:id', async (req, res) => {
+//     try {
+//         const { id } = req.params;
+//         const updatedWord = await WordData.findByIdAndUpdate(id, req.body, {
+//             new: true, // 回傳更新後的文件
+//             runValidators: true // 套用模型驗證
+//         });
+
+//         if (!updatedWord) {
+//             return res.status(404).json({ error: 'Word not found' });
+//         }
+
+//         res.json(updatedWord);
+//     } catch (err) {
+//         res.status(400).json({ error: err.message });
+//     }
+// });
+// //修改情境案例
+// router.put('/Scenario/:id', async (req, res) => {
+//     try {
+//         const { id } = req.params;
+//         const updatedScenario = await ScenarioData.findByIdAndUpdate(id, req.body, {
+//             new: true, // 回傳更新後的文件
+//             runValidators: true // 套用模型驗證
+//         });
+
+//         if (!updatedScenario) {
+//             return res.status(404).json({ error: 'Scenario not found' });
+//         }
+
+//         res.json(updatedScenario);
+//     } catch (err) {
+//         res.status(400).json({ error: err.message });
+//     }
+// });
+// /**
+//  * 查詢單一單元
+//  * 根據單元 ID 查詢單一教材資料
+//  */
+// router.get('/document/:id', async (req, res) => {
+//     try {
+//         const documentId = req.params.id;
+//         console.log(documentId);
+//         const document = await DocumentData.findOne({ _id: documentId });
+//         console.log(document);
+//         if (!document) {
+//             return res.status(404).json({ error: 'Document not found' });
+//         }
+//         res.json(document);
+//     } catch (err) {
+//         console.error(err);
+//         res.status(500).json({ error: err.message });
+//     }
+// });
+// //查詢單一單字
+// router.get('/Word/:id', async (req, res) => {
+//     try {
+//         const wordId = req.params.id;
+//         console.log(wordId);
+//         const word = await WordData.findOne({ _id: wordId });
+//         console.log(word);
+//         if (!word) {
+//             return res.status(404).json({ error: 'Word not found' });
+//         }
+//         res.json(word);
+//     } catch (err) {
+//         console.error(err);
+//         res.status(500).json({ error: err.message });
+//     }
+// });
+// //查詢單一情境案例
+// router.get('/Scenario/:id', async (req, res) => {
+//     try {
+//         const scenarioId = req.params.id;
+//         console.log(scenarioId);
+//         const scenario = await ScenarioData.findOne({ _id: scenarioId });
+//         console.log(scenario);
+//         if (!scenario) {
+//             return res.status(404).json({ error: 'Scenario not found' });
+//         }
+//         res.json(scenario);
+//     } catch (err) {
+//         console.error(err);
+//         res.status(500).json({ error: err.message });
+//     }
+// });
+// //刪除單元
+// router.delete('/document/:id', async (req, res) => {
+//     try {
+//         const result = await DocumentData.findByIdAndDelete(req.params.id);
+//         if (!result) {
+//             return res.status(404).json({ message: '找不到該document' });
+//         }
+//         res.json({ message: 'document已刪除', data: result });
+//     } catch (err) {
+//         res.status(500).json({ error: err.message });
+//     }
+// });
+// //刪除單字
+
+
+// router.delete('/word/:id', async (req, res) => {
+//     try {
+//         const result = await WordData.findByIdAndDelete(req.params.id);
+//         if (!result) {
+//             return res.status(404).json({ message: '找不到該word' });
+//         }
+//         res.json({ message: 'word已刪除', data: result });
+//     } catch (err) {
+//         res.status(500).json({ error: err.message });
+//     }
+// });
+// //刪除情境案例
+// router.delete('/scenario/:id', async (req, res) => {
+//     try {
+//         const result = await ScenarioData.findByIdAndDelete(req.params.id);
+//         if (!result) {
+//             return res.status(404).json({ message: '找不到該scenario' });
+//         }
+//         res.json({ message: 'scenario已刪除', data: result });
+//     } catch (err) {
+//         res.status(500).json({ error: err.message });
+//     }
+// });
 
 
 /**

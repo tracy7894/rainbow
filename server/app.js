@@ -11,7 +11,7 @@ const courseRoutes = require('./routes/courseRoutes');
 //主題相關api
 const themeRoutes = require('./routes/themeRoutes');
 const discussionRoutes=require('./routes/discussionRoutes')
-
+const documentRoutes=require('./routes/documentRoute')
 var learningRoutes=require('./routes/learning')
 var app = express();
 const session=require('express-session')
@@ -49,6 +49,7 @@ app.use('/api/learning', learningRoutes);
 app.use('/api', courseRoutes);
 app.use('/api', themeRoutes);
 app.use('/api', discussionRoutes);
+app.use('/api',documentRoutes)
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));

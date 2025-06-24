@@ -1,4 +1,4 @@
-const ThemeData = require('../data/ThemeData');
+const ThemeData = require('../models/ThemeData');
 
 exports.createTheme = async (data) => {
     const theme = new ThemeData(data);

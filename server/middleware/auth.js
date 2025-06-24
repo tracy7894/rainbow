@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const Administrator = require('../models/Administrator');
+const Administrator = require('../models/AdminUserData');
 require('dotenv').config();
 
 // 驗證 JWT Token，支援從 Cookie 取得 Token

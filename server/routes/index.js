@@ -2,10 +2,10 @@ var express = require('express');
 const app = express();
 var http = require('http').Server(app);
 var router = express.Router();
-const StudentUserModel = require('../data/StudentUser') //學生
-const ExternalUserModel = require('../data/ExternalUser') //校外
+const StudentUserModel = require('../models/StudentUser') //學生
+const ExternalUserModel = require('../models/ExternalUser') //校外
 
-const GroupIDDataModel = require('../data/GroupData')//組別編號
+const GroupIDDataModel = require('../models/GroupData')//組別編號
 let checkLogin = require('../middleware/checkLogin');
 
 const path = require('path');

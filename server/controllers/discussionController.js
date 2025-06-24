@@ -3,8 +3,8 @@ const discussionService = require('../services/discussionService');
 exports.createDiscussion = async (req, res) => {
     try {
         const data = {
-            user: req.user._id,
-            userModel: req.user.modelName, // auth.js回傳modelName
+            user: req.user.userId,
+            userModel: req.user.userModel,
             course: req.body.course,
             content: req.body.content
         };
@@ -18,10 +18,16 @@ exports.createDiscussion = async (req, res) => {
 exports.updateDiscussion = async (req, res) => {
     try {
         const { id } = req.params;
-        const updated = await discussionService.updateDiscussion(id, req.user, req.body.content);
+        const updated = await discussionService.updateDiscussion(id, {
+            userId: req.user.userId,
+            userModel: req.user.userModel,
+            content: req.body.content
+        });
+
         if (!updated) {
             return res.status(403).json({ error: '無權限修改此留言或留言不存在' });
         }
+
         res.json(updated);
     } catch (err) {
         res.status(400).json({ error: err.message });

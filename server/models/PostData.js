@@ -11,7 +11,7 @@ const PostSchema = new mongoose.Schema({
     userModel: {
         type: String,
         required: true,
-        enum: ['StudentUser', 'ExternalUser', 'AdminUserData']
+        enum: ['AdminUserData']
     },
     content: { type: String, required: true },
     createdAt: { type: Date, default: Date.now }

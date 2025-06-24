@@ -1,5 +1,5 @@
 module.exports = (io) => {
-  const MessageData = require('../data/MessageData'); // 訊息資料模型
+  const MessageData = require('../models/MessageData'); // 訊息資料模型
 
   io.on('connection', async function(socket) {
     const groupId = socket.handshake.query.groupId || 'publicRoom';
