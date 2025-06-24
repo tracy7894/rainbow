@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const discussionController = require('../controllers/discussionController');
 const postController = require('../controllers/postController');
-//const { authMiddleware, adminMiddleware } = require('../middleware/auth');
+const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 //留言相關
 // 新增留言（需登入）
 router.post('/discussion', authMiddleware, discussionController.createDiscussion);
