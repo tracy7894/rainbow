@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const QuestionSchema = new mongoose.Schema({//題目
     questionText: { type: String, required: true },
     options: [{ type: String, required: true }], // 選項
-    correctAnswer: { type: Number, required: true } // 正確答案的index 問卷沒有正確答案用null 
+    correctAnswer: { type: Number, } // 正確答案的index 問卷沒有正確答案用null （require:true改掉）
 });
 
 const QuizDataSchema = new mongoose.Schema({//測驗＆問卷

@@ -7,7 +7,7 @@ const StudentQuizScoreSchema = new mongoose.Schema({
         refPath: 'studentModel' // 動態參照 studentModel
     },
     studentModel: { type: String, required: true, enum: ['StudentUser', 'ExternalUser'] },
-    quizId: { type: mongoose.Schema.Types.ObjectId, ref: 'Quiz', required: true },
+    quizId: { type: mongoose.Schema.Types.ObjectId, ref: 'QuizData', required: true },//改成QuizData
     answers: [// 選擇的答案 自動對應原始題目
         {
             questionId: { type: mongoose.Schema.Types.ObjectId, ref: 'QuizData.questions' }, // 題目 ID

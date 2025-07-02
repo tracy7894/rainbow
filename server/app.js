@@ -13,6 +13,9 @@ const themeRoutes = require('./routes/themeRoutes');
 const discussionRoutes=require('./routes/discussionRoutes')
 const documentRoutes=require('./routes/documentRoute')
 var learningRoutes=require('./routes/learning')
+const progressRoutes=require('./routes/ progressRoutes')
+const quizRoutes=require('./routes/quizRoutes')
+const profolioRoutes=require('./routes/profolioRoutes')
 var app = express();
 const session=require('express-session')
 const MongoStore=require('connect-mongo')
@@ -50,6 +53,9 @@ app.use('/api', courseRoutes);
 app.use('/api', themeRoutes);
 app.use('/api', discussionRoutes);
 app.use('/api',documentRoutes)
+app.use('/api',progressRoutes)
+app.use('/api',profolioRoutes)
+app.use('/api',quizRoutes)
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));
