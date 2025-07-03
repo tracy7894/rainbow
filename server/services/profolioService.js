@@ -100,12 +100,11 @@ exports.recalculateProfolio = async (studentId, studentModel, courseId = null, s
             themeCompletionRate: [],
             CourseCompletionRate: 0,
             bonus: (profolioRecord ? profolioRecord.bonus : 0),
-            allQuizzesByTheme: [] // 新增：沒有主題就沒有測驗問卷
         };
     }
 
     const detailedThemeCompletionRates = []; // 將包含教材完成度 + 該主題下的測驗/問卷分數
-    const allQuizzesByTheme = []; // **新增：新的陣列，儲存每個主題的所有測驗/問卷列表**
+  
 
     let totalCourseCompletedPoints = 0;
     let totalCourseMaxPoints = 0;
@@ -207,7 +206,6 @@ exports.recalculateProfolio = async (studentId, studentModel, courseId = null, s
         CourseCompletionRate: courseOverallCompletionPercentage,
         bonus: (profolioRecord ? profolioRecord.bonus : 0),
         lastUpdated: (profolioRecord ? profolioRecord.lastUpdated : null),
-        allQuizzesByTheme: allQuizzesByTheme // **新增：單獨的測驗/問卷列表**
     };
 };
 
