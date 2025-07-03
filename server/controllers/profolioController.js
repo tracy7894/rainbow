@@ -28,7 +28,6 @@ exports.getProfolioByStudent = async (req, res) => {
         res.status(200).json(profolio);
     } catch (error) {
         console.error(`API 錯誤 (獲取學習歷程): ${error.message}`);
-        // 根據錯誤類型返回不同的 HTTP 狀態碼
         if (error.message.includes('找不到')) {
             return res.status(404).json({ error: error.message });
         }

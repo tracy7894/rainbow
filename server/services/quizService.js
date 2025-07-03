@@ -50,7 +50,7 @@ exports.submitQuiz = async (submissionData) => {
     }
     // --- 繳交期限檢查結束 ---
 
-    let finalScore = null; // 預設分數為 null，問卷時會設為 100
+    let finalScore = null; // 預設分數為 null
 
     // 判斷類型並處理分數
     if (quiz.type === 1) { // 測驗
@@ -103,8 +103,6 @@ exports.submitQuiz = async (submissionData) => {
     );
 
     // --- 新增：提交成功後，觸發學習歷程 (Profolio) 的重新計算 ---
-    // 傳遞 studentId, studentModel 以及 quiz 所屬的 courseId (如果 profolio 是課程相關的)
-    // 假設你的 quiz 數據中包含 course 字段
     if (quiz.course) {
         await profolioService.updateProfolioOnQuizScoreSubmission(student, studentModel, quiz.course);
     } else {

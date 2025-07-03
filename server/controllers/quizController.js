@@ -53,7 +53,6 @@ exports.submitQuiz = async (req, res) => {
         const { student, studentModel, quizId, answers } = req.body;
         let actualStudentId = student; // 預設從 req.body 獲取
 
-        // 如果你使用了 authMiddleware 並且它成功附加了 req.user
         if (req.user && req.user.userId) {
             actualStudentId = req.user.userId;
         }
