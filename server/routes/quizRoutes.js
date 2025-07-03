@@ -11,7 +11,7 @@ router.get('/quiz/:id', quizController.getQuizById);
 router.get('/quiz/:id/for-student', quizController.getQuizForStudent);
 router.get('/quizzes', quizController.getAllQuizzes);
 
-// // 提交與查詢測驗成績
+// // 提交與查詢測驗成績 （可防止重複提交 自動批改 愈時無法提交）
 router.post('/quiz/submit', authMiddleware, quizController.submitQuiz);
 // 查詢特定學生 (特定模型) 在特定測驗/問卷的成績
 router.get('/quiz/student/:studentId/:studentModel/quiz/:quizId', authMiddleware, quizController.getStudentQuizScoreForSingleQuiz

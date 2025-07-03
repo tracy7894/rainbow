@@ -32,7 +32,6 @@ exports.getAllQuizzes = async () => {
 
 
 exports.submitQuiz = async (submissionData) => {
-    // submissionData 應該包含 { student, studentModel, quizId, answers }
     const { student, studentModel, quizId, answers } = submissionData;
 
     const quiz = await QuizData.findById(quizId);
@@ -44,74 +43,87 @@ exports.submitQuiz = async (submissionData) => {
 
     // --- 新增：檢查繳交期限 ---
     const currentTime = new Date();
-    // 確保 quiz.timeLimit 存在且有效
     if (quiz.timeLimit && currentTime > quiz.timeLimit) {
         throw new Error('提交失敗：已超過測驗/問卷的繳交期限。');
     }
     // --- 繳交期限檢查結束 ---
 
-    let finalScore = null; // 預設分數為 null
+    // --- 新增：防止重複提交邏輯 ---
+    // 查詢學生是否已經提交過該測驗/問卷
+    const existingSubmission = await StudentQuizScore.findOne({
+        student: student,
+        studentModel: studentModel,
+        quizId: quizId
+    });
+
+    if (existingSubmission) {
+        // 如果已經存在提交記錄
+        // 對於測驗 (quiz.type === 1)，通常只允許提交一次，所以直接阻止再次提交
+        if (quiz.type === 1) { // 測驗
+            throw new Error('您已完成此測驗，無法重複提交成績。');
+        } else if (quiz.type === 0) { // 問卷
+            // 對於問卷 (quiz.type === 0)，如果允許重新填寫，可以讓它繼續更新
+            // 如果問卷也只允許提交一次，則可以改為 throw new Error('您已提交此問卷。');
+            console.log(`學生 ${student} 已提交過問卷 ${quizId}，將更新其記錄。`);
+            // 這裡可以選擇更新或阻止。若要完全阻止，則在此處 throw error。
+            // 由於你之前需求是 "重複 post"，所以對於問卷我們讓它更新。
+        }
+    }
+    // --- 防止重複提交邏輯結束 ---
+
+    let finalScore = null;
 
     // 判斷類型並處理分數
     if (quiz.type === 1) { // 測驗
         let correctCount = 0;
-        // 確保 answers 是一個陣列且有內容，避免遍歷 undefined
         if (answers && Array.isArray(answers) && answers.length > 0) {
             quiz.questions.forEach((q, index) => {
-                // 找到學生提交的對應問題的答案
                 const submittedAnswer = answers.find(a => a.questionId.toString() === q._id.toString());
-
-                // 檢查題目是否有正確答案 (q.correctAnswer !== null)
-                // 並且學生選擇的答案 (submittedAnswer?.selectedOption) 與正確答案匹配
                 if (q.correctAnswer !== null && submittedAnswer && submittedAnswer.selectedOption === q.correctAnswer) {
                     correctCount++;
                 }
             });
-
-            // 計算分數：(正確題數 / 總題數) * 100
-            // 避免除以零的錯誤
             if (quiz.questions.length > 0) {
                 finalScore = Math.round((correctCount / quiz.questions.length) * 100);
             } else {
-                finalScore = 0; // 如果沒有題目，分數為0
+                finalScore = 0;
             }
         } else {
-            finalScore = 0; // 如果沒有提交答案，分數為0
+            finalScore = 0;
         }
-
     } else if (quiz.type === 0) { // 問卷
-        // 問卷設定分數為 100
-        finalScore = 100;
+        finalScore = 100; // 問卷設定分數為 100
     } else {
         throw new Error('不支援的測驗或問卷類型。');
     }
 
-    // 檢查是否已經提交過該測驗/問卷，如果已經提交過則更新，否則創建新的
-    // 這是為了滿足你 "重複 post" 的需求，即如果存在則更新，而不是每次都新建
-    let existingStudentQuizScore = await StudentQuizScore.findOneAndUpdate(
-        {
+    let savedStudentQuizScore;
+    if (existingSubmission && quiz.type === 0) { // 如果是問卷且已存在，則更新
+        existingSubmission.answers = answers;
+        existingSubmission.score = finalScore;
+        existingSubmission.submittedAt = new Date();
+        savedStudentQuizScore = await existingSubmission.save();
+    } else { // 如果是測驗 (type 1) 且不存在，或者問卷但不存在，則創建新記錄
+        const newStudentQuizScore = new StudentQuizScore({
             student: student,
             studentModel: studentModel,
-            quizId: quizId
-        },
-        {
+            quizId: quizId,
             answers: answers,
             score: finalScore,
-            submittedAt: new Date() // 更新提交時間
-        },
-        { new: true, upsert: true } // 如果找不到則創建一個新的 (upsert)
-    );
+            submittedAt: new Date()
+        });
+        savedStudentQuizScore = await newStudentQuizScore.save();
+    }
 
-    // --- 新增：提交成功後，觸發學習歷程 (Profolio) 的重新計算 ---
+    // --- 提交成功後，觸發學習歷程 (Profolio) 的重新計算 ---
     if (quiz.course) {
         await profolioService.updateProfolioOnQuizScoreSubmission(student, studentModel, quiz.course);
     } else {
-        // 如果 quiz 沒有 course 字段，則觸發總體學習歷程更新
         await profolioService.updateProfolioOnQuizScoreSubmission(student, studentModel);
     }
     // --- Profolio 更新觸發結束 ---
 
-    return existingStudentQuizScore; // 返回保存或更新後的記錄
+    return savedStudentQuizScore;
 };
 
 //查詢特定學生 (特定模型) 在特定測驗/問卷的成績

@@ -9,25 +9,27 @@ exports.getProfolioByStudent = async (req, res) => {
     try {
         const { studentId, studentModel } = req.params;
 
-        // 驗證 ID 格式
         if (!mongoose.Types.ObjectId.isValid(studentId)) {
             return res.status(400).json({ message: '無效的學生 ID 格式。' });
         }
-        // 驗證學生模型名稱
         if (!['StudentUser', 'ExternalUser'].includes(studentModel)) {
             return res.status(400).json({ message: '無效的學生模型名稱。請使用 "StudentUser" 或 "ExternalUser"。' });
         }
 
-        // 調用服務層獲取數據
+        // 調用服務層獲取數據，服務層會返回包含詳細資訊的學習歷程
         const profolio = await profolioService.getStudentProfolio(studentId, studentModel);
 
+        // 由於服務層的 getStudentProfolio 在找不到時會嘗試創建並計算，
+        // 所以通常不會返回 null。如果真的返回 null，表示邏輯上有異常。
         if (!profolio) {
-            // 理論上 getStudentProfolio 應該會創建一個，所以這裡 404 情況會很少見
-            return res.status(404).json({ message: '找不到該學生的學習歷程數據。' });
+            // 這是一個極端情況，如果服務層沒有拋出錯誤也沒有返回數據
+            console.error(`服務層未返回學習歷程數據 for student ${studentId}`);
+            return res.status(500).json({ message: '無法獲取學習歷程數據。' });
         }
-        res.status(200).json(profolio);
+        res.status(200).json(profolio); // 直接返回服務層組裝好的詳細數據
     } catch (error) {
         console.error(`API 錯誤 (獲取學習歷程): ${error.message}`);
+        // 這裡的錯誤處理仍然通用，因為錯誤訊息會直接從服務層拋出
         if (error.message.includes('找不到')) {
             return res.status(404).json({ error: error.message });
         }
@@ -114,22 +116,22 @@ exports.getAllStudentsProfolioByCourse = async (req, res) => {
     try {
         const { courseId } = req.params;
 
-        // 驗證 courseId 格式
         if (!mongoose.Types.ObjectId.isValid(courseId)) {
             return res.status(400).json({ message: '無效的課程 ID 格式。' });
         }
 
-        // 調用服務層獲取數據
+        // 調用服務層獲取數據，服務層會返回包含詳細資訊的學習歷程列表
         const profolios = await profolioService.getAllStudentsProfolioByCourse(courseId);
 
+        // 根據返回的 profolios 列表判斷
         if (!profolios || profolios.length === 0) {
+            // 如果服務層沒有拋出錯誤但返回空列表，說明該課程下沒有找到相關學生數據
             return res.status(404).json({ message: '該課程下沒有找到任何學生的學習歷程數據。' });
         }
-        res.status(200).json(profolios);
+        res.status(200).json(profolios); // 直接返回服務層組裝好的詳細數據列表
     } catch (error) {
         console.error(`API 錯誤 (獲取課程下所有學生學習歷程): ${error.message}`);
-        // 根據錯誤類型返回不同的 HTTP 狀態碼
-        if (error.message.includes('找不到')) {
+        if (error.message.includes('指定的課程 ID 不存在')) { // 針對特定錯誤信息返回 404
             return res.status(404).json({ error: error.message });
         }
         res.status(500).json({ error: '伺服器內部錯誤。' });
